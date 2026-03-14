@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Registro de Ventas</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --pink: #F092D5;
+      --green: #99FFA0;
+      --brown: #7A664D;
+      --bg: #1a1410;
+      --surface: #231d17;
+      --surface2: #2e261e;
+      --text: #f5ede6;
+      --text-muted: #a89580;
+      --radius: 16px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 16px 80px;
+      position: relative;
+      overflow-x: hidden;
+    }
+    body::before {
+      content: '';
+      position: fixed; top: -120px; left: -120px;
+      width: 420px; height: 420px;
+      background: radial-gradient(circle, #F092D530 0%, transparent 70%);
+      pointer-events: none; z-index: 0;
+    }
+    body::after {
+      content: '';
+      position: fixed; bottom: -100px; right: -100px;
+      width: 380px; height: 380px;
+      background: radial-gradient(circle, #99FFA025 0%, transparent 70%);
+      pointer-events: none; z-index: 0;
+    }
+    .container { position: relative; z-index: 1; width: 100%; max-width: 720px; }
+
+    .back-btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: transparent; border: 1px solid #3a2f24; border-radius: 10px;
+      color: var(--text-muted); font-family: 'DM Mono', monospace;
+      font-size: 12px; letter-spacing: 1px; padding: 8px 16px;
+      cursor: pointer; text-decoration: none; margin-bottom: 28px;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .back-btn:hover { border-color: #F092D560; color: var(--pink); }
+
+    header { text-align: center; margin-bottom: 36px; animation: fadeDown 0.6s ease both; }
+    header .tag {
+      display: inline-block; background: var(--green); color: var(--bg);
+      font-size: 10px; font-weight: 500; letter-spacing: 3px; text-transform: uppercase;
+      padding: 4px 14px; border-radius: 100px; margin-bottom: 14px;
+    }
+    header h1 { font-family: 'DM Serif Display', serif; font-size: clamp(2rem, 6vw, 3.2rem); line-height: 1.1; }
+    header h1 span { color: var(--green); font-style: italic; }
+    header p { margin-top: 10px; color: var(--text-muted); font-size: 13px; }
+
+    /* Stats */
+    .stats-row {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+      margin-bottom: 16px; animation: fadeUp 0.5s ease both;
+    }
+    .stat-card {
+      background: var(--surface); border: 1px solid #3a2f24; border-radius: var(--radius);
+      padding: 18px; text-align: center;
+    }
+    .stat-val { font-family: 'DM Serif Display', serif; font-size: 1.8rem; color: var(--green); }
+    .stat-lbl { font-size: 10px; color: var(--text-muted); letter-spacing: 1.5px; text-transform: uppercase; margin-top: 4px; }
+
+    /* Search & filters */
+    .filters-card {
+      background: var(--surface); border: 1px solid #3a2f24; border-radius: var(--radius);
+      padding: 20px 24px; margin-bottom: 16px; animation: fadeUp 0.55s ease both;
+    }
+    .filters-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+    .filter-group { display: flex; flex-direction: column; gap: 6px; }
+    .filter-label { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-muted); }
+    input[type="text"], input[type="date"] {
+      background: var(--surface2); border: 1px solid #3a2f24; border-radius: 10px;
+      color: var(--text); font-family: 'DM Mono', monospace; font-size: 13px;
+      padding: 10px 14px; outline: none; transition: border-color 0.2s, box-shadow 0.2s; width: 100%;
+    }
+    input::placeholder { color: #5a4d3d; }
+    input:focus { border-color: var(--pink); box-shadow: 0 0 0 3px #F092D520; }
+    input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.5); cursor: pointer; }
+
+    /* Day groups */
+    .day-group { margin-bottom: 24px; }
+    .day-header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 10px 16px; margin-bottom: 10px;
+      background: var(--surface2); border: 1px solid #3a2f24; border-radius: 10px;
+    }
+    .day-label {
+      font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--pink);
+    }
+    .day-count { font-size: 11px; color: var(--text-muted); }
+
+    .day-footer {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 14px 20px; margin-top: 10px;
+      background: var(--surface); border: 1px solid #3a2f24; border-radius: 12px;
+      border-left: 3px solid var(--green);
+    }
+    .day-footer-left { display: flex; flex-direction: column; gap: 2px; }
+    .day-footer-title { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-muted); }
+    .day-footer-savings { font-size: 12px; color: var(--pink); margin-top: 2px; }
+    .day-footer-total { font-family: 'DM Serif Display', serif; font-size: 1.8rem; color: var(--green); }
+
+    /* Ventas list */
+    .ventas-list { display: flex; flex-direction: column; gap: 0; animation: fadeUp 0.6s ease both; }
+    .venta-card {
+      background: var(--surface); border: 1px solid #3a2f24; border-radius: var(--radius);
+      padding: 18px 22px; cursor: pointer; transition: border-color 0.2s, transform 0.15s;
+      margin-bottom: 8px;
+    }
+    .venta-card:hover { border-color: #99FFA040; transform: translateY(-2px); }
+    .venta-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+    .btn-delete {
+      background: transparent; border: 1px solid #5a1a1a; color: #d06060;
+      border-radius: 8px; padding: 6px 10px; font-size: 12px; cursor: pointer;
+      font-family: 'DM Mono', monospace; transition: background 0.15s, border-color 0.15s;
+      flex-shrink: 0;
+    }
+    .btn-delete:hover { background: #3a1010; border-color: #d06060; }
+
+    /* Confirm dialog */
+    .confirm-overlay {
+      position: fixed; inset: 0; background: #000a; z-index: 300;
+      display: flex; align-items: center; justify-content: center; padding: 20px;
+      opacity: 0; pointer-events: none; transition: opacity 0.2s;
+    }
+    .confirm-overlay.open { opacity: 1; pointer-events: all; }
+    .confirm-box {
+      background: var(--surface); border: 1px solid #5a1a1a; border-radius: 16px;
+      padding: 28px; max-width: 360px; width: 100%; text-align: center;
+      transform: scale(0.92); transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    .confirm-overlay.open .confirm-box { transform: scale(1); }
+    .confirm-icon { font-size: 36px; margin-bottom: 12px; }
+    .confirm-title { font-family: 'DM Serif Display', serif; font-size: 1.3rem; margin-bottom: 8px; }
+    .confirm-desc { font-size: 12px; color: var(--text-muted); margin-bottom: 24px; line-height: 1.6; }
+    .confirm-btns { display: flex; gap: 10px; }
+    .confirm-btns button {
+      flex: 1; padding: 11px; border-radius: 10px; border: none; cursor: pointer;
+      font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 500; transition: opacity 0.15s;
+    }
+    .confirm-btns button:hover { opacity: 0.85; }
+    .confirm-cancel { background: var(--surface2); border: 1px solid #3a2f24 !important; color: var(--text-muted); }
+    .confirm-delete { background: #c04040; color: #fff; }
+    .venta-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+    .venta-left {}
+    .venta-id { font-size: 10px; color: var(--text-muted); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 4px; }
+    .venta-cliente { font-size: 15px; color: var(--text); font-weight: 500; }
+    .venta-meta { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
+    .venta-total { font-family: 'DM Serif Display', serif; font-size: 1.6rem; color: var(--green); flex-shrink: 0; }
+    .venta-prods { margin-top: 10px; font-size: 11px; color: var(--text-muted); display: flex; flex-wrap: wrap; gap: 6px; }
+    .venta-prod-tag {
+      background: var(--surface2); border: 1px solid #3a2f24; border-radius: 6px;
+      padding: 3px 8px; font-size: 10px;
+    }
+
+    /* Empty */
+    .empty-state {
+      text-align: center; padding: 60px 0; color: var(--text-muted); font-size: 13px;
+      background: var(--surface); border: 1px solid #3a2f24; border-radius: var(--radius);
+    }
+    .empty-state .icon { font-size: 46px; margin-bottom: 14px; display: block; }
+
+    /* Modal overlay */
+    .modal-overlay {
+      position: fixed; inset: 0; background: #0008; z-index: 200;
+      display: flex; align-items: center; justify-content: center;
+      padding: 20px; opacity: 0; pointer-events: none;
+      transition: opacity 0.25s;
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+    .modal {
+      background: var(--surface); border: 1px solid #3a2f24; border-radius: 20px;
+      width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto;
+      padding: 32px; position: relative;
+      transform: translateY(24px); transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    .modal-overlay.open .modal { transform: translateY(0); }
+    .modal-close {
+      position: absolute; top: 18px; right: 18px;
+      background: var(--surface2); border: 1px solid #3a2f24; border-radius: 8px;
+      color: var(--text-muted); font-family: 'DM Mono', monospace; font-size: 12px;
+      padding: 6px 12px; cursor: pointer; transition: color 0.2s, border-color 0.2s;
+    }
+    .modal-close:hover { color: var(--pink); border-color: #F092D560; }
+
+    .modal-section { margin-bottom: 22px; }
+    .modal-section-title {
+      font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+      color: var(--text-muted); margin-bottom: 12px;
+      padding-bottom: 8px; border-bottom: 1px solid #3a2f24;
+    }
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .info-item {}
+    .info-lbl { font-size: 10px; color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 3px; }
+    .info-val { font-size: 14px; color: var(--text); }
+    .info-val.empty { color: #4a3d30; font-style: italic; }
+
+    .modal-product {
+      background: var(--surface2); border: 1px solid #3a2f24; border-radius: 12px;
+      padding: 14px 16px; margin-bottom: 8px;
+    }
+    .mp-name { font-size: 14px; color: var(--text); font-weight: 500; margin-bottom: 5px; }
+    .mp-detail { display: flex; gap: 10px; font-size: 11px; color: var(--text-muted); flex-wrap: wrap; }
+    .mp-detail .disc { color: var(--pink); }
+    .mp-detail .final { color: var(--green); font-weight: 500; }
+    .mp-row { display: flex; justify-content: space-between; align-items: flex-start; }
+    .mp-total { font-family: 'DM Serif Display', serif; font-size: 18px; color: var(--green); }
+
+    .modal-totals { background: var(--surface2); border: 1px solid #3a2f24; border-radius: 12px; padding: 16px 18px; }
+    .total-row { display: flex; justify-content: space-between; align-items: baseline; padding: 5px 0; }
+    .total-row .tkey { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-muted); }
+    .total-row .tval { font-family: 'DM Serif Display', serif; font-size: 17px; color: var(--text); }
+    .total-row .tval.green { color: var(--green); font-size: 26px; }
+    .total-row .tval.pink  { color: var(--pink); }
+    .total-divider { height: 1px; background: #3a2f24; margin: 8px 0; }
+
+    .divider { height: 1px; background: linear-gradient(to right, transparent, #3a2f24, transparent); margin: 20px 0; }
+
+    @keyframes fadeDown {
+      from { opacity: 0; transform: translateY(-18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @media (max-width: 500px) {
+      .filters-row { grid-template-columns: 1fr; }
+      .stats-row   { grid-template-columns: 1fr 1fr; }
+      .info-grid   { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <a href="index.html" class="back-btn">← Inicio</a>
+
+  <header>
+    <div class="tag">Registro</div>
+    <h1>Historial de <span>Ventas</span></h1>
+    <p>Consulta, busca y filtra todas las ventas guardadas.</p>
+  </header>
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-val" id="statVentas">0</div>
+      <div class="stat-lbl">Ventas</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" id="statTotal">Q 0</div>
+      <div class="stat-lbl">Total vendido</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" id="statAhorro">Q 0</div>
+      <div class="stat-lbl">Ahorro dado</div>
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <div class="filters-card">
+    <div class="filters-row">
+      <div class="filter-group">
+        <div class="filter-label">Buscar cliente</div>
+        <input type="text" id="searchCliente" placeholder="Nombre, tel o NIT..." oninput="renderVentas()"/>
+      </div>
+      <div class="filter-group">
+        <div class="filter-label">Desde</div>
+        <input type="date" id="fechaDesde" onchange="renderVentas()"/>
+      </div>
+      <div class="filter-group">
+        <div class="filter-label">Hasta</div>
+        <input type="date" id="fechaHasta" onchange="renderVentas()"/>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lista -->
+  <div class="ventas-list" id="ventasList"></div>
+
+</div>
+
+<!-- Confirm delete -->
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-box">
+    <div class="confirm-icon">🗑️</div>
+    <div class="confirm-title">¿Eliminar venta?</div>
+    <div class="confirm-desc" id="confirmDesc">Esta acción no se puede deshacer.</div>
+    <div class="confirm-btns">
+      <button class="confirm-cancel" onclick="closeConfirm()">Cancelar</button>
+      <button class="confirm-delete" onclick="confirmDelete()">Eliminar</button>
+    </div>
+  </div>
+</div>
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+  <div class="modal" id="modalContent">
+    <button class="modal-close" onclick="closeModal()">✕ Cerrar</button>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<script>
+  let allVentas = [];
+
+  function loadVentas() {
+    allVentas = JSON.parse(localStorage.getItem('ventas') || '[]');
+    updateStats(allVentas);
+    renderVentas();
+  }
+
+  function updateStats(ventas) {
+    const total  = ventas.reduce((s, v) => s + (v.total || 0), 0);
+    const ahorro = ventas.reduce((s, v) => s + (v.descuento || 0), 0);
+    document.getElementById('statVentas').textContent = ventas.length;
+    document.getElementById('statTotal').textContent  = 'Q ' + Math.round(total).toLocaleString('es-GT');
+    document.getElementById('statAhorro').textContent = 'Q ' + Math.round(ahorro).toLocaleString('es-GT');
+  }
+
+  function parseLocalDate(str) {
+    // str format: d/m/yyyy (es-GT locale)
+    if (!str) return null;
+    const parts = str.split('/');
+    if (parts.length === 3) return new Date(parts[2], parts[1]-1, parts[0]);
+    return null;
+  }
+
+  function renderVentas() {
+    const q      = document.getElementById('searchCliente').value.trim().toLowerCase();
+    const desde  = document.getElementById('fechaDesde').value;
+    const hasta  = document.getElementById('fechaHasta').value;
+    const list   = document.getElementById('ventasList');
+
+    let filtered = allVentas.filter(v => {
+      if (q) {
+        const hay = [v.cliente?.nombre, v.cliente?.telefono, v.cliente?.nit]
+          .filter(Boolean).join(' ').toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      const vFecha = parseLocalDate(v.fecha);
+      if (desde && vFecha) {
+        const d = new Date(desde); d.setHours(0,0,0,0);
+        if (vFecha < d) return false;
+      }
+      if (hasta && vFecha) {
+        const h = new Date(hasta); h.setHours(23,59,59,999);
+        if (vFecha > h) return false;
+      }
+      return true;
+    });
+
+    // Update stats based on filtered results
+    updateStats(filtered);
+
+    if (filtered.length === 0) {
+      list.innerHTML = `
+        <div class="empty-state">
+          <span class="icon">📭</span>
+          ${allVentas.length === 0 ? 'Aún no hay ventas guardadas.' : 'No se encontraron ventas con ese criterio.'}
+        </div>`;
+      return;
+    }
+
+    // Group by date
+    const grupos = {};
+    filtered.forEach(v => {
+      if (!grupos[v.fecha]) grupos[v.fecha] = [];
+      grupos[v.fecha].push(v);
+    });
+
+    // Dates sorted newest first
+    const fechas = Object.keys(grupos).sort((a, b) => {
+      const pa = a.split('/'), pb = b.split('/');
+      const da = new Date(pa[2], pa[1]-1, pa[0]);
+      const db = new Date(pb[2], pb[1]-1, pb[0]);
+      return db - da;
+    });
+
+    list.innerHTML = fechas.map(fecha => {
+      const ventasDia = grupos[fecha];
+      const totalDia  = ventasDia.reduce((s, v) => s + (v.total     || 0), 0);
+      const ahorroDia = ventasDia.reduce((s, v) => s + (v.descuento || 0), 0);
+
+      const ventasHTML = ventasDia.map(v => {
+        const nombre = v.cliente?.nombre || '—';
+        const prods  = (v.productos || []).map(p =>
+          `<span class="venta-prod-tag">${p.name}${p.qty > 1 ? ' ×'+p.qty : ''}</span>`
+        ).join('');
+        return `
+          <div class="venta-card">
+            <div class="venta-header">
+              <div class="venta-left" onclick="openModal(${v.id})" style="cursor:pointer;flex:1;">
+                <div class="venta-id">🕐 ${v.hora}</div>
+                <div class="venta-cliente">${nombre}</div>
+                <div class="venta-meta">${v.cliente?.telefono ? '📞 ' + v.cliente.telefono + '  ·  ' : ''}${v.cliente?.nit ? 'NIT: ' + v.cliente.nit : ''}</div>
+              </div>
+              <div class="venta-actions">
+                <div class="venta-total" onclick="openModal(${v.id})" style="cursor:pointer;">Q ${(v.total || 0).toLocaleString('es-GT')}</div>
+                <button class="btn-delete" onclick="askDelete(${v.id}, '${(v.cliente?.nombre || 'Sin nombre').replace(/'/g,"\\'")}')">🗑</button>
+              </div>
+            </div>
+            <div class="venta-prods" onclick="openModal(${v.id})" style="cursor:pointer;">${prods}</div>
+          </div>`;
+      }).join('');
+
+      return `
+        <div class="day-group">
+          <div class="day-header">
+            <span class="day-label">📅 ${fecha}</span>
+            <span class="day-count">${ventasDia.length} venta${ventasDia.length !== 1 ? 's' : ''}</span>
+          </div>
+          ${ventasHTML}
+          <div class="day-footer">
+            <div class="day-footer-left">
+              <div class="day-footer-title">Resumen del día</div>
+              <div class="day-footer-savings">Ahorro total: – Q ${Math.round(ahorroDia).toLocaleString('es-GT')}</div>
+            </div>
+            <div class="day-footer-total">Q ${Math.round(totalDia).toLocaleString('es-GT')}</div>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  function openModal(id) {
+    const v = allVentas.find(v => v.id === id);
+    if (!v) return;
+
+    const c = v.cliente || {};
+    const productsHTML = (v.productos || []).map(p => {
+      const unitFinalR = p.unitFinalR || p.price;
+      const finalR     = p.finalR     || p.price * p.qty;
+      const unitDisc   = p.unitDisc   || 0;
+      return `
+        <div class="modal-product">
+          <div class="mp-row">
+            <div>
+              <div class="mp-name">${p.name}</div>
+              <div class="mp-detail">
+                <span>Precio: Q ${Math.round(p.price).toLocaleString('es-GT')}</span>
+                <span>Cant: ${p.qty}</span>
+                ${p.discount > 0 ? `<span class="disc">Desc. ${p.discount}%</span>` : ''}
+                ${p.discount > 0 ? `<span class="disc">– Q ${(unitDisc * p.qty).toLocaleString('es-GT')}</span>` : ''}
+                <span class="final">C/u: Q ${unitFinalR.toLocaleString('es-GT')}</span>
+              </div>
+            </div>
+            <div class="mp-total">Q ${finalR.toLocaleString('es-GT')}</div>
+          </div>
+        </div>`;
+    }).join('');
+
+    document.getElementById('modalBody').innerHTML = `
+      <div style="margin-bottom:24px;">
+        <div style="font-size:11px;color:var(--text-muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;">Venta # ${v.id}</div>
+        <div style="font-family:'DM Serif Display',serif;font-size:1.6rem;">${c.nombre || 'Sin nombre'}</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">${v.fecha}  ·  ${v.hora}</div>
+      </div>
+
+      <div class="modal-section">
+        <div class="modal-section-title">👤 Datos del Cliente</div>
+        <div class="info-grid">
+          <div class="info-item">
+            <div class="info-lbl">Nombre</div>
+            <div class="info-val ${!c.nombre ? 'empty' : ''}">${c.nombre || 'No registrado'}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-lbl">Teléfono</div>
+            <div class="info-val ${!c.telefono ? 'empty' : ''}">${c.telefono || 'No registrado'}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-lbl">NIT</div>
+            <div class="info-val ${!c.nit ? 'empty' : ''}">${c.nit || 'No registrado'}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-section">
+        <div class="modal-section-title">🛒 Productos</div>
+        ${productsHTML}
+      </div>
+
+      <div class="modal-section" style="margin-bottom:0">
+        <div class="modal-section-title">📊 Totales</div>
+        <div class="modal-totals">
+          <div class="total-row">
+            <span class="tkey">Subtotal</span>
+            <span class="tval">Q ${(v.subtotal || 0).toLocaleString('es-GT')}</span>
+          </div>
+          <div class="total-row">
+            <span class="tkey">Descuento</span>
+            <span class="tval pink">– Q ${(v.descuento || 0).toLocaleString('es-GT')}</span>
+          </div>
+          <div class="total-divider"></div>
+          <div class="total-row">
+            <span class="tkey">Total pagado</span>
+            <span class="tval green">Q ${(v.total || 0).toLocaleString('es-GT')}</span>
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.getElementById('modalOverlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeModal(e) {
+    if (e && e.target !== document.getElementById('modalOverlay') && !e.target.classList.contains('modal-close')) return;
+    document.getElementById('modalOverlay').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  let pendingDeleteId = null;
+
+  function askDelete(id, nombre) {
+    pendingDeleteId = id;
+    document.getElementById('confirmDesc').textContent =
+      `Se eliminará la venta de "${nombre}". Esta acción no se puede deshacer.`;
+    document.getElementById('confirmOverlay').classList.add('open');
+  }
+
+  function closeConfirm() {
+    pendingDeleteId = null;
+    document.getElementById('confirmOverlay').classList.remove('open');
+  }
+
+  function confirmDelete() {
+    if (!pendingDeleteId) return;
+    allVentas = allVentas.filter(v => v.id !== pendingDeleteId);
+    localStorage.setItem('ventas', JSON.stringify(allVentas));
+    closeConfirm();
+    updateStats(allVentas);
+    renderVentas();
+  }
+
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeConfirm(); closeModal({}); } });
+
+  loadVentas();
+</script>
+</body>
+</html>

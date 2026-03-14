@@ -1,26 +1,22 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Calculadora de Descuentos</title>
+  <title>Sistema de Ventas</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <style>
     :root {
       --pink: #F092D5;
-      --brown: #7A664D;
       --green: #99FFA0;
+      --brown: #7A664D;
       --bg: #1a1410;
       --surface: #231d17;
       --surface2: #2e261e;
       --text: #f5ede6;
       --text-muted: #a89580;
-      --radius: 16px;
     }
-
     * { box-sizing: border-box; margin: 0; padding: 0; }
-
     body {
       background: var(--bg);
       color: var(--text);
@@ -29,45 +25,35 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 40px 16px 80px;
+      justify-content: center;
+      padding: 40px 16px;
       position: relative;
-      overflow-x: hidden;
+      overflow: hidden;
     }
-
-    /* Background blobs */
     body::before {
       content: '';
       position: fixed;
-      top: -120px; left: -120px;
-      width: 420px; height: 420px;
-      background: radial-gradient(circle, #F092D530 0%, transparent 70%);
+      top: -140px; left: -140px;
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, #F092D528 0%, transparent 70%);
       pointer-events: none;
-      z-index: 0;
     }
     body::after {
       content: '';
       position: fixed;
-      bottom: -100px; right: -100px;
-      width: 380px; height: 380px;
-      background: radial-gradient(circle, #99FFA025 0%, transparent 70%);
+      bottom: -120px; right: -120px;
+      width: 460px; height: 460px;
+      background: radial-gradient(circle, #99FFA020 0%, transparent 70%);
       pointer-events: none;
-      z-index: 0;
     }
-
     .container {
       position: relative;
       z-index: 1;
       width: 100%;
-      max-width: 680px;
-    }
-
-    /* Header */
-    header {
+      max-width: 560px;
       text-align: center;
-      margin-bottom: 40px;
-      animation: fadeDown 0.6s ease both;
     }
-    header .tag {
+    .tag {
       display: inline-block;
       background: var(--pink);
       color: var(--bg);
@@ -77,774 +63,143 @@
       text-transform: uppercase;
       padding: 4px 14px;
       border-radius: 100px;
-      margin-bottom: 14px;
+      margin-bottom: 18px;
+      animation: fadeDown 0.5s ease both;
     }
-    header h1 {
+    h1 {
       font-family: 'DM Serif Display', serif;
-      font-size: clamp(2rem, 6vw, 3.4rem);
-      line-height: 1.1;
-      color: var(--text);
+      font-size: clamp(2.2rem, 7vw, 3.8rem);
+      line-height: 1.08;
+      margin-bottom: 12px;
+      animation: fadeDown 0.6s ease both;
     }
-    header h1 span { color: var(--pink); font-style: italic; }
-    header p {
-      margin-top: 10px;
+    h1 span { color: var(--pink); font-style: italic; }
+    .subtitle {
       color: var(--text-muted);
       font-size: 13px;
       letter-spacing: 0.5px;
+      margin-bottom: 56px;
+      animation: fadeDown 0.7s ease both;
     }
 
-    /* Card */
-    .card {
-      background: var(--surface);
-      border: 1px solid #3a2f24;
-      border-radius: var(--radius);
-      padding: 28px;
-      margin-bottom: 16px;
-      animation: fadeUp 0.5s ease both;
-    }
-    .card-title {
-      font-size: 11px;
-      letter-spacing: 2.5px;
-      text-transform: uppercase;
-      color: var(--text-muted);
-      margin-bottom: 20px;
-    }
-
-    /* Form row */
-    .form-row {
+    .menu-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 14px;
-      margin-bottom: 14px;
+      gap: 16px;
+      animation: fadeUp 0.7s ease both;
     }
-    .form-group {
+    .menu-card {
+      background: var(--surface);
+      border: 1px solid #3a2f24;
+      border-radius: 20px;
+      padding: 36px 24px;
+      cursor: pointer;
+      text-decoration: none;
+      color: var(--text);
       display: flex;
       flex-direction: column;
-      gap: 6px;
-    }
-    label {
-      font-size: 11px;
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-      color: var(--text-muted);
-    }
-    input[type="text"],
-    input[type="number"] {
-      background: var(--surface2);
-      border: 1px solid #3a2f24;
-      border-radius: 10px;
-      color: var(--text);
-      font-family: 'DM Mono', monospace;
-      font-size: 14px;
-      padding: 12px 14px;
-      outline: none;
-      transition: border-color 0.2s, box-shadow 0.2s;
-      width: 100%;
-    }
-    input[type="text"]::placeholder,
-    input[type="number"]::placeholder { color: #5a4d3d; }
-    input[type="number"]::-webkit-inner-spin-button,
-    input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
-    input[type="number"] { -moz-appearance: textfield; }
-    input[type="text"]:focus,
-    input[type="number"]:focus {
-      border-color: var(--pink);
-      box-shadow: 0 0 0 3px #F092D520;
-    }
-
-    /* Discount slider area */
-    .discount-area {
-      background: var(--surface2);
-      border: 1px solid #3a2f24;
-      border-radius: 12px;
-      padding: 16px 18px;
-      margin-bottom: 14px;
-    }
-    .discount-header {
-      display: flex;
-      justify-content: space-between;
       align-items: center;
-      margin-bottom: 10px;
-    }
-    .discount-label {
-      font-size: 11px;
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-      color: var(--text-muted);
-    }
-    .discount-value {
-      font-family: 'DM Serif Display', serif;
-      font-size: 22px;
-      color: var(--green);
-    }
-    input[type="range"] {
-      -webkit-appearance: none;
-      width: 100%;
-      height: 6px;
-      background: #3a2f24;
-      border-radius: 100px;
-      outline: none;
-    }
-    input[type="range"]::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      width: 20px; height: 20px;
-      border-radius: 50%;
-      background: var(--green);
-      cursor: pointer;
-      box-shadow: 0 0 8px #99FFA060;
-      transition: transform 0.15s;
-    }
-    input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.2); }
-
-    /* Buttons */
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      border: none;
-      border-radius: 10px;
-      cursor: pointer;
-      font-family: 'DM Mono', monospace;
-      font-size: 13px;
-      font-weight: 500;
-      letter-spacing: 1px;
-      padding: 12px 22px;
-      transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s;
-    }
-    .btn:active { transform: scale(0.97); }
-    .btn-pink {
-      background: var(--pink);
-      color: var(--bg);
-      width: 100%;
-    }
-    .btn-pink:hover { box-shadow: 0 4px 20px #F092D540; }
-    .btn-outline {
-      background: transparent;
-      border: 1px solid #3a2f24;
-      color: var(--text-muted);
-      font-size: 12px;
-      padding: 8px 16px;
-    }
-    .btn-outline:hover { border-color: #F092D560; color: var(--pink); }
-    .btn-danger {
-      background: transparent;
-      border: 1px solid #5a1a1a;
-      color: #d06060;
-      padding: 6px 12px;
-      font-size: 11px;
-      border-radius: 8px;
-    }
-    .btn-danger:hover { background: #3a1010; }
-
-    /* Product list */
-    .product-list { display: flex; flex-direction: column; gap: 10px; }
-    .product-item {
-      display: grid;
-      grid-template-columns: 1fr auto auto auto;
-      align-items: center;
-      gap: 12px;
-      background: var(--surface2);
-      border: 1px solid #3a2f24;
-      border-radius: 12px;
-      padding: 14px 16px;
-      animation: fadeUp 0.3s ease both;
-    }
-    .product-name { font-size: 14px; color: var(--text); }
-    .product-original {
-      font-size: 11px;
-      color: var(--text-muted);
-      text-decoration: line-through;
-    }
-    .product-qty {
-      font-size: 12px;
-      color: var(--text-muted);
-      text-align: center;
-    }
-    .product-final {
-      font-family: 'DM Serif Display', serif;
-      font-size: 18px;
-      color: var(--green);
-      text-align: right;
-    }
-    .product-discount-badge {
-      display: inline-block;
-      background: #1a3a1e;
-      color: var(--green);
-      font-size: 10px;
-      letter-spacing: 1px;
-      padding: 2px 7px;
-      border-radius: 100px;
-      margin-top: 2px;
-    }
-
-    /* Divider */
-    .divider {
-      height: 1px;
-      background: linear-gradient(to right, transparent, #3a2f24, transparent);
-      margin: 20px 0;
-    }
-
-    /* Summary */
-    .summary-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      padding: 6px 0;
-    }
-    .summary-row .key {
-      font-size: 11px;
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-      color: var(--text-muted);
-    }
-    .summary-row .val {
-      font-family: 'DM Serif Display', serif;
-      font-size: 20px;
-      color: var(--text);
-    }
-    .summary-row.total .val {
-      font-size: 30px;
-      color: var(--green);
-    }
-    .summary-row .savings-val {
-      font-family: 'DM Serif Display', serif;
-      font-size: 20px;
-      color: var(--pink);
-    }
-
-    /* Empty state */
-    .empty-state {
-      text-align: center;
-      padding: 32px 0;
-      color: var(--text-muted);
-      font-size: 13px;
-      letter-spacing: 0.5px;
-    }
-    .empty-state .icon { font-size: 36px; margin-bottom: 10px; display: block; }
-
-    /* Tier indicator */
-    .tier-bar {
-      background: var(--surface2);
-      border: 1px solid #3a2f24;
-      border-radius: 12px;
-      padding: 14px 18px;
-      margin-bottom: 14px;
-    }
-    .tier-bar-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 10px;
-      font-size: 11px;
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-      color: var(--text-muted);
-    }
-    .tier-bar-header span { color: var(--pink); }
-    .tier-track {
+      gap: 16px;
+      transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
       position: relative;
-      height: 8px;
-      background: #3a2f24;
-      border-radius: 100px;
       overflow: hidden;
     }
-    .tier-fill {
+    .menu-card::before {
+      content: '';
       position: absolute;
-      top: 0; left: 0;
-      height: 100%;
-      border-radius: 100px;
-      background: linear-gradient(to right, var(--pink), var(--green));
-      transition: width 0.5s cubic-bezier(0.34,1.56,0.64,1);
+      inset: 0;
+      opacity: 0;
+      transition: opacity 0.3s;
+      border-radius: 20px;
     }
-    .tier-labels {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 6px;
-      font-size: 10px;
-      color: #5a4d3d;
-    }
+    .menu-card.pink::before  { background: radial-gradient(circle at 50% 0%, #F092D515, transparent 70%); }
+    .menu-card.green::before { background: radial-gradient(circle at 50% 0%, #99FFA012, transparent 70%); }
+    .menu-card:hover { transform: translateY(-4px); }
+    .menu-card.pink:hover  { box-shadow: 0 12px 40px #F092D525; border-color: #F092D540; }
+    .menu-card.green:hover { box-shadow: 0 12px 40px #99FFA020; border-color: #99FFA035; }
+    .menu-card:hover::before { opacity: 1; }
+    .menu-card:active { transform: scale(0.98); }
 
-    .btn-green {
-      background: var(--green);
-      color: var(--bg);
-      width: 100%;
-      margin-top: 16px;
+    .menu-icon {
+      font-size: 38px;
+      line-height: 1;
     }
-    .btn-green:hover { box-shadow: 0 4px 20px #99FFA050; }
-    .btn-green:disabled { opacity: 0.5; cursor: not-allowed; }
-
-    .form-row-3 {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 14px;
-      margin-bottom: 14px;
+    .menu-label {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.3rem;
+      color: var(--text);
     }
-
-    /* Product detail rows inside carrito */
-    .product-detail {
-      display: flex;
-      justify-content: space-between;
+    .menu-card.pink  .menu-label { color: var(--pink); }
+    .menu-card.green .menu-label { color: var(--green); }
+    .menu-desc {
       font-size: 11px;
       color: var(--text-muted);
-      margin-top: 4px;
-      gap: 8px;
-      flex-wrap: wrap;
+      letter-spacing: 0.5px;
+      line-height: 1.5;
+      text-align: center;
     }
-    .product-detail span { white-space: nowrap; }
-    .product-detail .det-disc  { color: var(--pink); }
-    .product-detail .det-final { color: var(--green); font-weight: 500; }
 
-    /* Animations */
+    .stats-bar {
+      margin-top: 40px;
+      background: var(--surface);
+      border: 1px solid #3a2f24;
+      border-radius: 14px;
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-around;
+      animation: fadeUp 0.85s ease both;
+    }
+    .stat { text-align: center; }
+    .stat-val {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.6rem;
+      color: var(--green);
+    }
+    .stat-lbl {
+      font-size: 10px;
+      color: var(--text-muted);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+    .stat-divider {
+      width: 1px;
+      background: #3a2f24;
+      align-self: stretch;
+    }
+
     @keyframes fadeDown {
-      from { opacity: 0; transform: translateY(-20px); }
+      from { opacity: 0; transform: translateY(-18px); }
       to   { opacity: 1; transform: translateY(0); }
     }
     @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(16px); }
+      from { opacity: 0; transform: translateY(18px); }
       to   { opacity: 1; transform: translateY(0); }
     }
-
-    /* Responsive */
-    @media (max-width: 480px) {
-      .form-row { grid-template-columns: 1fr; }
-      .product-item { grid-template-columns: 1fr auto auto; }
-      .product-original { display: none; }
+    @media (max-width: 420px) {
+      .menu-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
-
 <div class="container">
+  <div class="tag">Sistema de Ventas</div>
+  <h1>Menú <span>Inicio</span></h1>
+  <p class="subtitle">Selecciona una opción para continuar.</p>
 
-  <header>
-    <div class="tag">Calculadora</div>
-    <h1>Descuentos <span>Inteligentes</span></h1>
-    <p>Calcula precio con descuentos.</p>
-  </header>
-
-  <!-- Datos del cliente -->
-  <div class="card" style="animation-delay:0.05s">
-    <div class="card-title">👤 Datos del Cliente</div>
-    <div class="form-row">
-      <div class="form-group">
-        <label>Nombre</label>
-        <input type="text" id="clientName" placeholder="Nombre del cliente" />
-      </div>
-      <div class="form-group">
-        <label>Teléfono</label>
-        <input type="text" id="clientPhone" placeholder="+502 0000-0000" />
-      </div>
-    </div>
-    <div class="form-row" style="margin-bottom:0">
-      <div class="form-group">
-        <label>NIT</label>
-        <input type="text" id="clientNit" placeholder="NIT" />
-      </div>
-    </div>
-  </div>
-
-  <!-- Agregar producto -->
-  <div class="card" style="animation-delay:0.3s">
-    <div class="card-title">➕ Agrega Producto</div>
-
-    <div class="form-row">
-      <div class="form-group">
-        <label>Nombre</label>
-        <input type="text" id="productName" placeholder="Nombre del producto" />
-      </div>
-      <div class="form-group">
-        <label>Precio unitario (Q)</label>
-        <input type="number" id="productPrice" placeholder="0.00" min="0" step="0.01"/>
-      </div>
-    </div>
-
-    <div class="form-row">
-      <div class="form-group">
-        <label>Cantidad</label>
-        <input type="number" id="productQty" placeholder="1" min="1" value="1"/>
-      </div>
-      <div class="form-group">
-        <label>Descuento (%)</label>
-        <input type="number" id="productDiscount" placeholder="0" min="0" max="100" value="15"/>
-      </div>
-    </div>
-
-    <button class="btn btn-pink" onclick="addProduct()">
-      <span>＋</span> Agregar al carrito
-    </button>
-  </div>
-
-  <!-- Lista de productos -->
-  <div class="card" style="animation-delay:0.3s">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-      <div class="card-title" style="margin-bottom:0">🛒 Carrito</div>
-      <button class="btn btn-outline" onclick="clearAll()">Vaciar</button>
-    </div>
-
-    <div class="product-list" id="productList">
-      <div class="empty-state">
-        <span class="icon">🛍️</span>
-        Aún no hay productos. ¡Agrega uno arriba!
-      </div>
-    </div>
-  </div>
-
-  <!-- Resumen -->
-  <div class="card" style="animation-delay:0.4s" id="summaryCard">
-    <div class="card-title">📊 Resumen</div>
-
-    <div class="summary-row">
-      <span class="key">Subtotal</span>
-      <span class="val" id="subtotalDisplay">Q 0.00</span>
-    </div>
-    <div class="summary-row">
-      <span class="key">Descuento productos</span>
-      <span class="savings-val" id="itemDiscountDisplay">– Q 0.00</span>
-    </div>
-
-    <div class="divider"></div>
-
-    <div class="summary-row">
-      <span class="key">Ahorro total</span>
-      <span class="savings-val" id="totalSavingsDisplay">– Q 0.00</span>
-    </div>
-    <div class="summary-row total">
-      <span class="key" style="font-size:13px;">Total a pagar</span>
-      <span class="val" id="totalDisplay">Q 0.00</span>
-    </div>
-
-    <button class="btn btn-green" id="downloadBtn" onclick="downloadSummary()">
-      ⬇ Descargar resumen como PNG
-    </button>
+  <div class="menu-grid">    <a href="calculadora.html" class="menu-card pink">
+      <div class="menu-icon">🧮</div>
+      <div class="menu-label">Calculadora</div>
+      <div class="menu-desc">Agrega productos, aplica descuentos y guarda la venta.</div>
+    </a>
+    <a href="registro.html" class="menu-card green">
+      <div class="menu-icon">📋</div>
+      <div class="menu-label">Registro</div>
+      <div class="menu-desc">Consulta el historial de ventas guardadas con detalle completo.</div>
+    </a>
   </div>
 
 </div>
 
-<script>
-  let products = [];
-
-  function fmt(n) {
-    return 'Q ' + Math.round(n).toLocaleString('es-GT');
-  }
-  function roundUp5(n) {
-    return Math.ceil(n / 5) * 5;
-  }
-  function fmtCeil(n) {
-    return 'Q ' + roundUp5(n).toLocaleString('es-GT');
-  }
-  // Descuento real = original - finalRedondeado (sin decimales, siempre coherente)
-  function realDiscount(original, discountPct) {
-    const raw      = original * (1 - discountPct / 100);
-    const finalR   = roundUp5(raw);
-    return original - finalR;
-  }
-
-  function addProduct() {
-    const name     = document.getElementById('productName').value.trim() || 'Producto';
-    const price    = parseFloat(document.getElementById('productPrice').value) || 0;
-    const qty      = parseInt(document.getElementById('productQty').value)    || 1;
-    const discount = Math.min(100, Math.max(0, parseFloat(document.getElementById('productDiscount').value) || 0));
-
-    if (price <= 0) {
-      document.getElementById('productPrice').focus();
-      document.getElementById('productPrice').style.borderColor = 'var(--pink)';
-      setTimeout(() => document.getElementById('productPrice').style.borderColor = '', 1500);
-      return;
-    }
-
-    products.push({ id: Date.now(), name, price, qty, discount });
-
-    document.getElementById('productName').value     = '';
-    document.getElementById('productPrice').value    = '';
-    document.getElementById('productQty').value      = '1';
-    document.getElementById('productDiscount').value = '0';
-
-    render();
-  }
-
-  function removeProduct(id) {
-    products = products.filter(p => p.id !== id);
-    render();
-  }
-
-  function clearAll() {
-    products = [];
-    render();
-  }
-
-  function updateDiscount() {
-    const val = document.getElementById('globalDiscount').value;
-    document.getElementById('globalDiscountDisplay').textContent = val + '%';
-    render();
-  }
-
-  function render() {
-    const list = document.getElementById('productList');
-
-    if (products.length === 0) {
-      list.innerHTML = `
-        <div class="empty-state">
-          <span class="icon">🛍️</span>
-          Aún no hay productos. ¡Agrega uno arriba!
-        </div>`;
-    } else {
-      list.innerHTML = products.map(p => {
-        const original   = p.price * p.qty;
-        const unitFinalR = roundUp5(p.price * (1 - p.discount / 100));
-        const finalR     = unitFinalR * p.qty;
-        const unitDisc   = Math.round(p.price) - unitFinalR;
-
-        return `
-          <div class="product-item">
-            <div style="grid-column:1/-1; display:flex; justify-content:space-between; align-items:flex-start;">
-              <div>
-                <div class="product-name">${p.name}</div>
-                <div class="product-detail">
-                  <span>Precio C/u: Q ${Math.round(p.price).toLocaleString('es-GT')}</span>
-                  <span>Cant: ${p.qty}</span>
-                  ${p.discount > 0 ? `<span class="det-disc">Desc. ${p.discount}%</span>` : ''}
-                  ${p.discount > 0 ? `<span class="det-disc">– Q ${(unitDisc * p.qty).toLocaleString('es-GT')}</span>` : ''}
-                  <span class="det-final">C/u: Q ${unitFinalR.toLocaleString('es-GT')}</span>
-                </div>
-              </div>
-              <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;margin-left:12px;">
-                <div class="product-final">Q ${finalR.toLocaleString('es-GT')}</div>
-                <button class="btn btn-danger" onclick="removeProduct(${p.id})">✕</button>
-              </div>
-            </div>
-          </div>`;
-      }).join('');
-    }
-
-    // Calculations — descuento real = original - finalRedondeado
-    let subtotal     = 0;
-    let totalFinal   = 0;
-
-    products.forEach(p => {
-      const unitFinalR = roundUp5(p.price * (1 - p.discount / 100));
-      const finalR     = unitFinalR * p.qty;
-      subtotal   += p.price * p.qty;
-      totalFinal += finalR;
-    });
-
-    const itemDiscount = subtotal - totalFinal;
-
-    document.getElementById('subtotalDisplay').textContent     = fmt(subtotal);
-    document.getElementById('itemDiscountDisplay').textContent = '– Q ' + itemDiscount.toLocaleString('es-GT');
-    document.getElementById('totalSavingsDisplay').textContent = '– Q ' + itemDiscount.toLocaleString('es-GT');
-    document.getElementById('totalDisplay').textContent        = 'Q ' + totalFinal.toLocaleString('es-GT');
-
-    // Tier bar
-    const savingPct = subtotal > 0 ? (itemDiscount / subtotal) * 100 : 0;
-    const tierFill = Math.min(100, (savingPct / 60) * 100);
-    document.getElementById('tierFill').style.width = tierFill + '%';
-
-    let tierLabel = 'Básico';
-    if (savingPct >= 45) tierLabel = 'Elite 🏆';
-    else if (savingPct >= 30) tierLabel = 'Gold ✨';
-    else if (savingPct >= 15) tierLabel = 'Silver 🥈';
-    document.getElementById('tierLabel').textContent = tierLabel;
-  }
-
-  async function downloadSummary() {
-    if (products.length === 0) return;
-
-    const btn = document.getElementById('downloadBtn');
-    btn.disabled = true;
-    btn.textContent = '⏳ Generando imagen...';
-
-    try {
-      const clientName  = document.getElementById('clientName').value.trim();
-      const clientPhone = document.getElementById('clientPhone').value.trim();
-      const clientNit   = document.getElementById('clientNit').value.trim();
-
-      let subtotal = 0, totalFinal = 0;
-      products.forEach(p => {
-        const unitFinalR = roundUp5(p.price * (1 - p.discount / 100));
-        subtotal   += p.price * p.qty;
-        totalFinal += unitFinalR * p.qty;
-      });
-      const itemDiscount = subtotal - totalFinal;
-
-      const scale   = 2;
-      const W       = 560;
-      const pad     = 36;
-      const hasClient = clientName || clientPhone || clientNit;
-      const clientH = hasClient ? 80 : 0;
-      const prodRowH = 64;
-      const H = pad + 28 + 16        // title
-              + clientH              // client block
-              + products.length * prodRowH + 16  // products
-              + 1 + 20               // divider
-              + 40 + 40 + 40 + 54   // subtotal, desc, ahorro, total
-              + 40 + pad;            // footer
-
-      const canvas = document.createElement('canvas');
-      canvas.width  = W * scale;
-      canvas.height = H * scale;
-      const ctx = canvas.getContext('2d');
-      ctx.scale(scale, scale);
-
-      // BG
-      ctx.fillStyle = '#231d17';
-      ctx.fillRect(0, 0, W, H);
-
-      // Border
-      ctx.strokeStyle = '#3a2f24';
-      ctx.lineWidth = 1;
-      roundRect(ctx, 0.5, 0.5, W - 1, H - 1, 16);
-      ctx.stroke();
-
-      let y = pad;
-
-      // ── Title ──
-      ctx.fillStyle = '#a89580';
-      ctx.font = '500 10px monospace';
-      ctx.letterSpacing = '2.5px';
-      ctx.fillText('RESUMEN DE VENTA', pad, y);
-      y += 16;
-      ctx.strokeStyle = '#3a2f24';
-      ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.moveTo(pad, y); ctx.lineTo(W - pad, y); ctx.stroke();
-      y += 16;
-
-      // ── Client info ──
-      if (hasClient) {
-        ctx.fillStyle = '#F092D5';
-        ctx.font = '500 10px monospace';
-        ctx.letterSpacing = '1.5px';
-        ctx.fillText('CLIENTE', pad, y + 2);
-        y += 18;
-        ctx.fillStyle = '#f5ede6';
-        ctx.font = '13px monospace';
-        ctx.letterSpacing = '0px';
-        if (clientName)  { ctx.fillText('Nombre:  ' + clientName,  pad, y); y += 18; }
-        if (clientPhone) { ctx.fillText('Tel:     ' + clientPhone, pad, y); y += 18; }
-        if (clientNit)   { ctx.fillText('NIT:     ' + clientNit,   pad, y); y += 18; }
-        y += 10;
-        ctx.strokeStyle = '#3a2f24';
-        ctx.lineWidth = 1;
-        ctx.beginPath(); ctx.moveTo(pad, y); ctx.lineTo(W - pad, y); ctx.stroke();
-        y += 16;
-      }
-
-      // ── Products ──
-      ctx.fillStyle = '#a89580';
-      ctx.font = '500 9px monospace';
-      ctx.letterSpacing = '1.5px';
-      ctx.fillText('PRODUCTOS', pad, y);
-      y += 14;
-
-      products.forEach(p => {
-        const original   = p.price * p.qty;
-        const unitFinalR = roundUp5(p.price * (1 - p.discount / 100));
-        const finalR     = unitFinalR * p.qty;
-        const unitDisc   = Math.round(p.price) - unitFinalR;
-
-        // Product name
-        ctx.fillStyle = '#f5ede6';
-        ctx.font = 'bold 13px monospace';
-        ctx.letterSpacing = '0px';
-        ctx.fillText(p.name + (p.qty > 1 ? '  ×' + p.qty : ''), pad, y + 14);
-
-        // Final price right-aligned
-        ctx.fillStyle = '#99FFA0';
-        ctx.font = 'bold 16px monospace';
-        const finalStr = 'Q ' + finalR.toLocaleString('es-GT');
-        const fw2 = ctx.measureText(finalStr).width;
-        ctx.fillText(finalStr, W - pad - fw2, y + 14);
-
-        // Detail row
-        ctx.fillStyle = '#a89580';
-        ctx.font = '11px monospace';
-        ctx.letterSpacing = '0px';
-        const detail = `Precio: Q ${Math.round(p.price).toLocaleString('es-GT')}   Cant: ${p.qty}` +
-          (p.discount > 0 ? `   Desc. ${p.discount}%: – Q ${(unitDisc * p.qty).toLocaleString('es-GT')}   C/u: Q ${unitFinalR.toLocaleString('es-GT')}` : '');
-        ctx.fillText(detail, pad, y + 32);
-
-        // subtle separator
-        ctx.strokeStyle = '#2e261e';
-        ctx.lineWidth = 1;
-        ctx.beginPath(); ctx.moveTo(pad, y + prodRowH - 2); ctx.lineTo(W - pad, y + prodRowH - 2); ctx.stroke();
-
-        y += prodRowH;
-      });
-
-      y += 16;
-
-      // ── Divider ──
-      ctx.strokeStyle = '#3a2f24';
-      ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.moveTo(pad, y); ctx.lineTo(W - pad, y); ctx.stroke();
-      y += 20;
-
-      // ── Summary rows ──
-      const rows = [
-        { label: 'SUBTOTAL',      val: 'Q ' + Math.round(subtotal).toLocaleString('es-GT'),    color: '#f5ede6', rowH: 40 },
-        { label: 'DESCUENTO',     val: '– Q ' + itemDiscount.toLocaleString('es-GT'),           color: '#F092D5', rowH: 40 },
-        { label: 'AHORRO TOTAL',  val: '– Q ' + itemDiscount.toLocaleString('es-GT'),           color: '#F092D5', rowH: 40 },
-        { label: 'TOTAL A PAGAR', val: 'Q ' + totalFinal.toLocaleString('es-GT'),               color: '#99FFA0', rowH: 54, big: true },
-      ];
-
-      rows.forEach(r => {
-        ctx.fillStyle = '#a89580';
-        ctx.font = '500 9px monospace';
-        ctx.letterSpacing = '1.5px';
-        ctx.fillText(r.label, pad, y + (r.big ? 22 : 16));
-
-        ctx.fillStyle = r.color;
-        ctx.font = r.big ? 'bold 28px serif' : '15px serif';
-        ctx.letterSpacing = '0px';
-        const vw = ctx.measureText(r.val).width;
-        ctx.fillText(r.val, W - pad - vw, y + (r.big ? 24 : 16));
-
-        y += r.rowH;
-      });
-
-      // ── Footer: fecha y hora ──
-      const now = new Date();
-      const fecha = now.toLocaleDateString('es-GT');
-      const hora  = now.toLocaleTimeString('es-GT', { hour: '2-digit', minute: '2-digit' });
-      const fechaHora = fecha + '  ' + hora;
-      ctx.fillStyle = '#5a4d3d';
-      ctx.font = '10px monospace';
-      ctx.letterSpacing = '0.5px';
-      const fhw = ctx.measureText(fechaHora).width;
-      ctx.fillText(fechaHora, W - pad - fhw, H - pad / 2);
-
-      const link = document.createElement('a');
-      link.download = 'resumen-descuentos.png';
-      link.href = canvas.toDataURL('image/png');
-      link.click();
-
-    } catch(e) {
-      console.error(e);
-      alert('No se pudo generar la imagen.');
-    }
-
-    btn.disabled = false;
-    btn.textContent = '⬇ Descargar resumen como PNG';
-  }
-
-  function roundRect(ctx, x, y, w, h, r) {
-    ctx.beginPath();
-    ctx.moveTo(x + r, y);
-    ctx.lineTo(x + w - r, y);
-    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-    ctx.lineTo(x + w, y + h - r);
-    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-    ctx.lineTo(x + r, y + h);
-    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-    ctx.lineTo(x, y + r);
-    ctx.quadraticCurveTo(x, y, x + r, y);
-    ctx.closePath();
-  }
-
-  // Allow pressing Enter to add
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Enter') addProduct();
-  });
-</script>
 </body>
 </html>
