@@ -376,8 +376,8 @@
       <div class="form-group">
         <label>Forma de pago</label>
         <div class="pago-toggle">
-          <button type="button" class="pago-btn active" id="pagoEfectivo" onclick="setPago('Efectivo')">💵 Efectivo</button>
-          <button type="button" class="pago-btn" id="pagoTarjeta" onclick="setPago('Tarjeta')">💳 Tarjeta</button>
+          <button type="button" class="pago-btn" id="pagoEfectivo" onclick="setPago('Efectivo')">💵 Efectivo</button>
+          <button type="button" class="pago-btn active" id="pagoTarjeta" onclick="setPago('Tarjeta')">💳 Tarjeta</button>
         </div>
       </div>
     </div>
@@ -389,7 +389,8 @@
     <div class="form-row">
       <div class="form-group">
         <label>Nombre</label>
-        <input type="text" id="productName" placeholder="Escribe el producto aquí"/>
+        <input type="text" id="productName" placeholder="Escribe el producto aquí" list="productSuggestions" autocomplete="off"/>
+        <datalist id="productSuggestions"></datalist>
       </div>
       <div class="form-group">
         <label>Precio unitario (Q)</label>
@@ -455,7 +456,7 @@
 
 <script>
   let products = [];
-  let formaPago = 'Efectivo';
+  let formaPago = 'Tarjeta';
 
   function setPago(tipo) {
     formaPago = tipo;
@@ -478,6 +479,7 @@
       return;
     }
     products.push({ id: Date.now(), name, price, qty, discount });
+    saveProductSuggestion(name);
     document.getElementById('productName').value     = '';
     document.getElementById('productPrice').value    = '';
     document.getElementById('productQty').value      = '1';
@@ -584,8 +586,8 @@
 
     // Reset
     products = [];
-    formaPago = 'Efectivo';
-    setPago('Efectivo');
+    formaPago = 'Tarjeta';
+    setPago('Tarjeta');
     document.getElementById('clientName').value  = '';
     document.getElementById('clientPhone').value = '';
     document.getElementById('clientNit').value   = '';
@@ -744,7 +746,32 @@
     input.value = formatted;
   }
 
+  // ── Autocompletado de productos ──
+  function saveProductSuggestion(name) {
+    if (!name || name === 'Producto') return;
+    const key = 'productSuggestions';
+    const list = JSON.parse(localStorage.getItem(key) || '[]');
+    const normalizado = name.trim();
+    if (!list.includes(normalizado)) {
+      list.push(normalizado);
+      list.sort((a, b) => a.localeCompare(b));
+      localStorage.setItem(key, JSON.stringify(list));
+    }
+    refreshDatalist(list);
+  }
+
+  function loadProductSuggestions() {
+    const list = JSON.parse(localStorage.getItem('productSuggestions') || '[]');
+    refreshDatalist(list);
+  }
+
+  function refreshDatalist(list) {
+    const dl = document.getElementById('productSuggestions');
+    dl.innerHTML = list.map(n => `<option value="${n}">`).join('');
+  }
+
   document.addEventListener('keydown', e => { if (e.key === 'Enter') addProduct(); });
+  loadProductSuggestions();
 </script>
 </body>
 </html>
