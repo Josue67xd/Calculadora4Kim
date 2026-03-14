@@ -551,27 +551,43 @@
     if (!v) return;
 
     const c = v.cliente || {};
-    const productsHTML = (v.productos || []).map(p => {
-      const unitFinalR = p.unitFinalR || p.price;
-      const finalR     = p.finalR     || p.price * p.qty;
-      const unitDisc   = p.unitDisc   || 0;
+
+    function buildProductHTML(p) {
+      const unitFinalR = p.unitFinalR != null ? p.unitFinalR : p.price;
+      const finalR     = p.finalR     != null ? p.finalR     : p.price * p.qty;
+      const unitDisc   = p.unitDisc   != null ? p.unitDisc   : 0;
+      const esExacto   = p.tipo === 'exacto';
+      const fmtV = v => esExacto ? 'Q ' + v.toFixed(2) : 'Q ' + Math.round(v).toLocaleString('es-GT');
       return `
         <div class="modal-product">
           <div class="mp-row">
             <div>
               <div class="mp-name">${p.name}</div>
               <div class="mp-detail">
-                <span>Precio: Q ${Math.round(p.price).toLocaleString('es-GT')}</span>
+                <span>Precio: Q ${esExacto ? p.price.toFixed(2) : Math.round(p.price).toLocaleString('es-GT')}</span>
                 <span>Cant: ${p.qty}</span>
                 ${p.discount > 0 ? `<span class="disc">Desc. ${p.discount}%</span>` : ''}
-                ${p.discount > 0 ? `<span class="disc">– Q ${(unitDisc * p.qty).toLocaleString('es-GT')}</span>` : ''}
-                <span class="final">C/u: Q ${unitFinalR.toLocaleString('es-GT')}</span>
+                ${p.discount > 0 ? `<span class="disc">– ${fmtV(unitDisc * p.qty)}</span>` : ''}
+                <span class="final">C/u: ${fmtV(unitFinalR)}</span>
               </div>
             </div>
-            <div class="mp-total">Q ${finalR.toLocaleString('es-GT')}</div>
+            <div class="mp-total">${fmtV(finalR)}</div>
           </div>
         </div>`;
-    }).join('');
+    }
+
+    const aproximados = (v.productos || []).filter(p => p.tipo !== 'exacto');
+    const exactos     = (v.productos || []).filter(p => p.tipo === 'exacto');
+
+    const aproximadosHTML = aproximados.length > 0 ? `
+      <div class="modal-section-title" style="margin-top:0">📐 Aproximados</div>
+      ${aproximados.map(buildProductHTML).join('')}` : '';
+
+    const exactosHTML = exactos.length > 0 ? `
+      <div class="modal-section-title" style="margin-top:${aproximados.length > 0 ? '16px' : '0'}">🎯 Exactos</div>
+      ${exactos.map(buildProductHTML).join('')}` : '';
+
+    const productsHTML = aproximadosHTML + exactosHTML;
 
     document.getElementById('modalBody').innerHTML = `
       <div style="margin-bottom:24px;">

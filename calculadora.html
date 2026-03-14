@@ -331,6 +331,31 @@
     }
     .toast.show { transform: translateX(-50%) translateY(0); }
 
+    /* Mode badge */
+    .mode-badge {
+      position: fixed;
+      top: 16px;
+      right: 20px;
+      font-size: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 4px 12px;
+      border-radius: 100px;
+      border: 1px solid;
+      z-index: 50;
+      pointer-events: none;
+      transition: all 0.3s;
+    }
+    .mode-badge.redondeo { color: var(--pink); border-color: #F092D540; background: #2a1a22; }
+    .mode-badge.exacto   { color: var(--green); border-color: #99FFA040; background: #1a2a1e; }
+
+    header h1 {
+      cursor: pointer;
+      user-select: none;
+      transition: opacity 0.15s;
+    }
+    header h1:hover { opacity: 0.75; }
+
     @keyframes fadeDown {
       from { opacity: 0; transform: translateY(-20px); }
       to   { opacity: 1; transform: translateY(0); }
@@ -347,12 +372,14 @@
 <body>
 <div class="container">
 
+  <div class="mode-badge redondeo" id="modeBadge">Redondeo</div>
+
   <a href="index.html" class="back-btn">← Inicio</a>
 
   <header>
     <div class="tag">Calculadora</div>
-    <h1>Descuentos <span>Inteligentes</span></h1>
-    <p>Calcula precio con descuentos.</p>
+    <h1 onclick="toggleMode()" title="Cambiar modo">Descuentos <span>Inteligentes</span></h1>
+    <p id="modeDesc">Calcula precio con descuentos.</p>
   </header>
 
   <!-- Cliente -->
@@ -457,6 +484,23 @@
 <script>
   let products = [];
   let formaPago = 'Tarjeta';
+  let modoExacto = false;
+
+  function toggleMode() {
+    modoExacto = !modoExacto;
+    const badge = document.getElementById('modeBadge');
+    const desc  = document.getElementById('modeDesc');
+    if (modoExacto) {
+      badge.textContent = 'Exacto';
+      badge.className   = 'mode-badge exacto';
+      desc.textContent  = 'Precios exactos, sin redondeo.';
+    } else {
+      badge.textContent = 'Redondeo';
+      badge.className   = 'mode-badge redondeo';
+      desc.textContent  = 'Calcula precio con descuentos.';
+    }
+    if (products.length > 0) render();
+  }
 
   function setPago(tipo) {
     formaPago = tipo;
@@ -478,7 +522,7 @@
       setTimeout(() => el.style.borderColor = '', 1500);
       return;
     }
-    products.push({ id: Date.now(), name, price, qty, discount });
+    products.push({ id: Date.now(), name, price, qty, discount, tipo: modoExacto ? 'exacto' : 'aproximado' });
     saveProductSuggestion(name);
     document.getElementById('productName').value     = '';
     document.getElementById('productPrice').value    = '';
@@ -498,10 +542,19 @@
   }
 
   function calcProduct(p) {
-    const unitFinalR = roundUp5(p.price * (1 - p.discount / 100));
-    const finalR     = unitFinalR * p.qty;
-    const unitDisc   = Math.round(p.price) - unitFinalR;
-    return { unitFinalR, finalR, unitDisc };
+    if (p.tipo === 'exacto' || (modoExacto && p.tipo === undefined)) {
+      // Exact: no rounding
+      const unitFinalR = p.price * (1 - p.discount / 100);
+      const finalR     = unitFinalR * p.qty;
+      const unitDisc   = p.price - unitFinalR;
+      return { unitFinalR, finalR, unitDisc };
+    } else {
+      // Rounded to nearest 5
+      const unitFinalR = roundUp5(p.price * (1 - p.discount / 100));
+      const finalR     = unitFinalR * p.qty;
+      const unitDisc   = Math.round(p.price) - unitFinalR;
+      return { unitFinalR, finalR, unitDisc };
+    }
   }
 
   function render() {
@@ -511,21 +564,23 @@
     } else {
       list.innerHTML = products.map(p => {
         const { unitFinalR, finalR, unitDisc } = calcProduct(p);
+        const esExacto = p.tipo === 'exacto';
+        const fmtP = v => esExacto ? 'Q ' + v.toFixed(2) : 'Q ' + Math.round(v).toLocaleString('es-GT');
         return `
           <div class="product-item">
             <div class="product-row">
               <div>
-                <div class="product-name">${p.name}</div>
+                <div class="product-name">${p.name} ${esExacto ? '<span style="font-size:9px;color:var(--green);letter-spacing:1px;border:1px solid #99FFA040;border-radius:4px;padding:1px 5px;">EXACTO</span>' : ''}</div>
                 <div class="product-detail">
-                  <span>Precio: Q ${Math.round(p.price).toLocaleString('es-GT')}</span>
+                  <span>Precio: Q ${p.price.toLocaleString('es-GT', {minimumFractionDigits: esExacto?2:0, maximumFractionDigits: esExacto?2:0})}</span>
                   <span>Cant: ${p.qty}</span>
                   ${p.discount > 0 ? `<span class="det-disc">Desc. ${p.discount}%</span>` : ''}
-                  ${p.discount > 0 ? `<span class="det-disc">– Q ${(unitDisc * p.qty).toLocaleString('es-GT')}</span>` : ''}
-                  <span class="det-final">C/u: Q ${unitFinalR.toLocaleString('es-GT')}</span>
+                  ${p.discount > 0 ? `<span class="det-disc">– ${fmtP(unitDisc * p.qty)}</span>` : ''}
+                  <span class="det-final">C/u: ${fmtP(unitFinalR)}</span>
                 </div>
               </div>
               <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
-                <div class="product-final">Q ${finalR.toLocaleString('es-GT')}</div>
+                <div class="product-final">${fmtP(finalR)}</div>
                 <button class="btn btn-danger" onclick="removeProduct(${p.id})">✕</button>
               </div>
             </div>
@@ -573,8 +628,8 @@
         const { unitFinalR, finalR, unitDisc } = calcProduct(p);
         return { ...p, unitFinalR, finalR, unitDisc };
       }),
-      subtotal:  Math.round(subtotal),
-      descuento: Math.round(descuento),
+      subtotal:  subtotal,
+      descuento: descuento,
       total:     totalFinal,
     };
 
