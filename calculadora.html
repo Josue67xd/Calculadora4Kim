@@ -188,6 +188,32 @@
       width: auto;
     }
     .btn-danger:hover { background: #3a1010; }
+
+    /* Pago toggle */
+    .pago-toggle {
+      display: flex;
+      gap: 8px;
+      margin-top: 2px;
+    }
+    .pago-btn {
+      flex: 1;
+      background: var(--surface2);
+      border: 1px solid #3a2f24;
+      border-radius: 10px;
+      color: var(--text-muted);
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      padding: 11px 8px;
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s, background 0.2s;
+      letter-spacing: 0.5px;
+    }
+    .pago-btn.active {
+      border-color: var(--green);
+      color: var(--green);
+      background: #1a3a1e;
+    }
+    .pago-btn:hover:not(.active) { border-color: #F092D560; color: var(--pink); }
     .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
     .product-list { display: flex; flex-direction: column; gap: 10px; }
@@ -347,6 +373,13 @@
         <label>NIT</label>
         <input type="text" id="clientNit" placeholder="12345678-9"/>
       </div>
+      <div class="form-group">
+        <label>Forma de pago</label>
+        <div class="pago-toggle">
+          <button type="button" class="pago-btn active" id="pagoEfectivo" onclick="setPago('Efectivo')">💵 Efectivo</button>
+          <button type="button" class="pago-btn" id="pagoTarjeta" onclick="setPago('Tarjeta')">💳 Tarjeta</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -422,6 +455,13 @@
 
 <script>
   let products = [];
+  let formaPago = 'Efectivo';
+
+  function setPago(tipo) {
+    formaPago = tipo;
+    document.getElementById('pagoEfectivo').classList.toggle('active', tipo === 'Efectivo');
+    document.getElementById('pagoTarjeta').classList.toggle('active',  tipo === 'Tarjeta');
+  }
 
   function fmt(n) { return 'Q ' + Math.round(n).toLocaleString('es-GT'); }
   function roundUp5(n) { return Math.ceil(n / 5) * 5; }
@@ -526,6 +566,7 @@
         telefono: document.getElementById('clientPhone').value.trim(),
         nit:      document.getElementById('clientNit').value.trim(),
       },
+      formaPago: formaPago,
       productos: products.map(p => {
         const { unitFinalR, finalR, unitDisc } = calcProduct(p);
         return { ...p, unitFinalR, finalR, unitDisc };
@@ -543,6 +584,8 @@
 
     // Reset
     products = [];
+    formaPago = 'Efectivo';
+    setPago('Efectivo');
     document.getElementById('clientName').value  = '';
     document.getElementById('clientPhone').value = '';
     document.getElementById('clientNit').value   = '';

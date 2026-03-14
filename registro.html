@@ -472,7 +472,7 @@
               <div class="venta-left" onclick="openModal(${v.id})" style="cursor:pointer;flex:1;">
                 <div class="venta-id">🕐 ${v.hora}</div>
                 <div class="venta-cliente">${nombre}</div>
-                <div class="venta-meta">${v.cliente?.telefono ? '📞 ' + v.cliente.telefono + '  ·  ' : ''}${v.cliente?.nit ? 'NIT: ' + v.cliente.nit : ''}</div>
+                <div class="venta-meta">${v.cliente?.telefono ? '📞 ' + v.cliente.telefono + '  ·  ' : ''}${v.cliente?.nit ? 'NIT: ' + v.cliente.nit + '  ·  ' : ''}${v.formaPago ? (v.formaPago === 'Efectivo' ? '💵' : '💳') + ' ' + v.formaPago : ''}</div>
               </div>
               <div class="venta-actions">
                 <div class="venta-total" onclick="openModal(${v.id})" style="cursor:pointer;">Q ${(v.total || 0).toLocaleString('es-GT')}</div>
@@ -594,6 +594,12 @@
           <div class="info-item">
             <div class="info-lbl">NIT</div>
             <div class="info-val ${!c.nit ? 'empty' : ''}">${c.nit || 'No registrado'}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-lbl">Forma de pago</div>
+            <div class="info-val ${!v.formaPago ? 'empty' : ''}" style="color:${v.formaPago === 'Tarjeta' ? 'var(--pink)' : 'var(--green)'}">
+              ${v.formaPago === 'Efectivo' ? '💵 Efectivo' : v.formaPago === 'Tarjeta' ? '💳 Tarjeta' : 'No registrado'}
+            </div>
           </div>
         </div>
       </div>
