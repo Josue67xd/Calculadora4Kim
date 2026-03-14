@@ -371,7 +371,7 @@
     <div class="form-row" style="margin-bottom:0">
       <div class="form-group">
         <label>NIT</label>
-        <input type="text" id="clientNit" placeholder="12345678-9"/>
+        <input type="text" id="clientNit" placeholder="CF"/>
       </div>
       <div class="form-group">
         <label>Forma de pago</label>
@@ -564,7 +564,7 @@
       cliente: {
         nombre:   document.getElementById('clientName').value.trim(),
         telefono: document.getElementById('clientPhone').value.trim(),
-        nit:      document.getElementById('clientNit').value.trim(),
+        nit:      document.getElementById('clientNit').value.trim() || 'CF',
       },
       formaPago: formaPago,
       productos: products.map(p => {
