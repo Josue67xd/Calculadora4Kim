@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Registro de Ventas</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
   <style>
     :root {
       --pink: #F092D5;
@@ -46,6 +48,7 @@
     }
     .container { position: relative; z-index: 1; width: 100%; max-width: 720px; }
 
+    /* Botón "← Inicio" para volver al menú principal */
     .back-btn {
       display: inline-flex; align-items: center; gap: 8px;
       background: transparent; border: 1px solid #3a2f24; border-radius: 10px;
@@ -66,7 +69,11 @@
     header h1 span { color: var(--green); font-style: italic; }
     header p { margin-top: 10px; color: var(--text-muted); font-size: 13px; }
 
-    /* Stats */
+    /* ─────────────────────────────────────────
+       TARJETAS DE ESTADÍSTICAS (arriba del registro)
+       Muestran total de ventas, monto total y ahorro
+       calculados sobre las ventas filtradas actualmente.
+       ───────────────────────────────────────── */
     .stats-row {
       display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
       margin-bottom: 16px; animation: fadeUp 0.5s ease both;
@@ -78,7 +85,12 @@
     .stat-val { font-family: 'DM Serif Display', serif; font-size: 1.8rem; color: var(--green); }
     .stat-lbl { font-size: 10px; color: var(--text-muted); letter-spacing: 1.5px; text-transform: uppercase; margin-top: 4px; }
 
-    /* Search & filters */
+    /* ─────────────────────────────────────────
+       SECCIÓN DE FILTROS
+       Búsqueda por nombre/tel/NIT en tiempo real.
+       Filtro por rango de fechas (desde/hasta).
+       Cualquier cambio llama a renderVentas().
+       ───────────────────────────────────────── */
     .filters-card {
       background: var(--surface); border: 1px solid #3a2f24; border-radius: var(--radius);
       padding: 20px 24px; margin-bottom: 16px; animation: fadeUp 0.55s ease both;
@@ -95,7 +107,14 @@
     input:focus { border-color: var(--pink); box-shadow: 0 0 0 3px #F092D520; }
     input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.5); cursor: pointer; }
 
-    /* Day groups */
+    /* ─────────────────────────────────────────
+       GRUPOS POR DÍA
+       Las ventas se agrupan por fecha.
+       Cada grupo tiene: encabezado con fecha y cantidad
+       de ventas, lista de ventas del día, sección
+       expandible "Total de productos vendidos",
+       y barra de resumen con total y ahorro del día.
+       ───────────────────────────────────────── */
     .day-group { margin-bottom: 24px; }
     .day-header {
       display: flex; justify-content: space-between; align-items: center;
@@ -296,7 +315,63 @@
 
     .divider { height: 1px; background: linear-gradient(to right, transparent, #3a2f24, transparent); margin: 20px 0; }
 
-    @keyframes fadeDown {
+    /* ─────────────────────────────────────────
+       BOTÓN DE EXPORTAR A EXCEL
+       Aparece al final de la lista de ventas.
+       Abre el modal de exportación.
+       ───────────────────────────────────────── */
+    .btn-export {
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      width: 100%; margin-top: 24px;
+      background: #1a3a1e; border: 1px solid #99FFA060; border-radius: 12px;
+      color: var(--green); font-family: 'DM Mono', monospace;
+      font-size: 13px; font-weight: 500; letter-spacing: 1px;
+      padding: 14px 22px; cursor: pointer;
+      transition: background 0.2s, box-shadow 0.2s;
+    }
+    .btn-export:hover { background: #1f4a24; box-shadow: 0 4px 20px #99FFA025; }
+    .btn-export:active { transform: scale(0.98); }
+
+    /* ─────────────────────────────────────────
+       MODAL DE EXPORTACIÓN
+       Permite elegir entre exportar todo el historial
+       o un rango de fechas específico.
+       ───────────────────────────────────────── */
+    .export-overlay {
+      position: fixed; inset: 0; background: #000a; z-index: 300;
+      display: flex; align-items: center; justify-content: center; padding: 20px;
+      opacity: 0; pointer-events: none; transition: opacity 0.25s;
+    }
+    .export-overlay.open { opacity: 1; pointer-events: all; }
+    .export-box {
+      background: var(--surface); border: 1px solid #3a2f24; border-radius: 20px;
+      padding: 32px 28px; width: 100%; max-width: 400px;
+      transform: translateY(20px); transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    .export-overlay.open .export-box { transform: translateY(0); }
+    .export-title { font-family: 'DM Serif Display', serif; font-size: 1.4rem; margin-bottom: 6px; }
+    .export-title span { color: var(--green); font-style: italic; }
+    .export-sub { font-size: 11px; color: var(--text-muted); margin-bottom: 24px; letter-spacing: 0.5px; }
+    .export-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+    .export-label { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-muted); }
+    .export-input {
+      background: var(--surface2); border: 1px solid #3a2f24; border-radius: 10px;
+      color: var(--text); font-family: 'DM Mono', monospace; font-size: 13px;
+      padding: 10px 14px; outline: none; width: 100%;
+      transition: border-color 0.2s;
+    }
+    .export-input:focus { border-color: var(--green); }
+    .export-input::-webkit-calendar-picker-indicator { filter: invert(0.5); cursor: pointer; }
+    .export-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px; }
+    .export-btns button {
+      padding: 11px; border-radius: 10px; border: none; cursor: pointer;
+      font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 500;
+      transition: opacity 0.15s;
+    }
+    .export-btns button:hover { opacity: 0.85; }
+    .btn-exp-cancel { background: var(--surface2); border: 1px solid #3a2f24 !important; color: var(--text-muted); }
+    .btn-exp-all    { background: #1a3a1e; color: var(--green); border: 1px solid #99FFA040 !important; }
+    .btn-exp-range  { background: var(--green); color: var(--bg); grid-column: 1 / -1; }
       from { opacity: 0; transform: translateY(-18px); }
       to   { opacity: 1; transform: translateY(0); }
     }
@@ -359,6 +434,32 @@
   <!-- Lista -->
   <div class="ventas-list" id="ventasList"></div>
 
+  <!-- Export button -->
+  <button class="btn-export" onclick="openExport()">
+    📊 Exportar a Excel
+  </button>
+
+</div>
+
+<!-- Export modal -->
+<div class="export-overlay" id="exportOverlay">
+  <div class="export-box">
+    <div class="export-title">Exportar a <span>Excel</span></div>
+    <div class="export-sub">Elige exportar todo el historial o un rango de fechas específico.</div>
+    <div class="export-group">
+      <div class="export-label">Desde</div>
+      <input type="date" class="export-input" id="exportDesde"/>
+    </div>
+    <div class="export-group">
+      <div class="export-label">Hasta</div>
+      <input type="date" class="export-input" id="exportHasta"/>
+    </div>
+    <div class="export-btns">
+      <button class="btn-exp-cancel" onclick="closeExport()">Cancelar</button>
+      <button class="btn-exp-all" onclick="exportExcel(false)">📋 Todo el historial</button>
+      <button class="btn-exp-range" onclick="exportExcel(true)">📅 Exportar rango</button>
+    </div>
+  </div>
 </div>
 
 <!-- Confirm delete -->
@@ -381,14 +482,23 @@
 </div>
 
 <script>
+  // ─────────────────────────────────────────────────────
+  // VARIABLE GLOBAL
+  // allVentas → copia en memoria de todas las ventas
+  //             cargadas desde localStorage.
+  // ─────────────────────────────────────────────────────
   let allVentas = [];
 
+  // Carga todas las ventas desde localStorage,
+  // actualiza las estadísticas y renderiza la lista.
   function loadVentas() {
     allVentas = JSON.parse(localStorage.getItem('ventas') || '[]');
     updateStats(allVentas);
     renderVentas();
   }
 
+  // Calcula y muestra en pantalla el total de ventas,
+  // monto total vendido y ahorro total del conjunto recibido.
   function updateStats(ventas) {
     const total  = ventas.reduce((s, v) => s + (v.total || 0), 0);
     const ahorro = ventas.reduce((s, v) => s + (v.descuento || 0), 0);
@@ -397,6 +507,8 @@
     document.getElementById('statAhorro').textContent = 'Q ' + Math.round(ahorro).toLocaleString('es-GT');
   }
 
+  // Convierte una fecha en formato "d/m/yyyy" (es-GT)
+  // a un objeto Date de JavaScript para poder comparar rangos.
   function parseLocalDate(str) {
     // str format: d/m/yyyy (es-GT locale)
     if (!str) return null;
@@ -405,6 +517,19 @@
     return null;
   }
 
+  // ─────────────────────────────────────────────────────
+  // renderVentas(): filtra y dibuja la lista completa.
+  // 1. Filtra por búsqueda de texto (nombre, tel, NIT)
+  // 2. Filtra por rango de fechas si están definidas
+  // 3. Actualiza estadísticas con el resultado filtrado
+  // 4. Agrupa las ventas por fecha (más reciente primero)
+  // 5. Por cada día genera:
+  //    - Encabezado con fecha y cantidad de ventas
+  //    - Sección "Total productos vendidos" (expandible)
+  //      que agrupa los mismos productos sumando cantidades
+  //    - Tarjetas individuales de cada venta
+  //    - Barra de resumen del día con total y ahorro
+  // ─────────────────────────────────────────────────────
   function renderVentas() {
     const q      = document.getElementById('searchCliente').value.trim().toLowerCase();
     const desde  = document.getElementById('fechaDesde').value;
@@ -546,6 +671,14 @@
     }).join('');
   }
 
+  // ─────────────────────────────────────────────────────
+  // openModal(id): busca la venta por id y muestra su
+  // detalle completo en el modal lateral.
+  // Separa los productos en dos secciones:
+  //   📐 Aproximados → tipo "aproximado" (con redondeo)
+  //   🎯 Exactos     → tipo "exacto" (sin redondeo)
+  // Solo muestra la sección que tenga productos.
+  // ─────────────────────────────────────────────────────
   function openModal(id) {
     const v = allVentas.find(v => v.id === id);
     if (!v) return;
@@ -649,12 +782,16 @@
     document.body.style.overflow = 'hidden';
   }
 
+  // Cierra el modal de detalle. Solo cierra si se hace clic
+  // en el overlay oscuro o en el botón "✕ Cerrar".
   function closeModal(e) {
     if (e && e.target !== document.getElementById('modalOverlay') && !e.target.classList.contains('modal-close')) return;
     document.getElementById('modalOverlay').classList.remove('open');
     document.body.style.overflow = '';
   }
 
+  // Expande o colapsa la sección "Total productos vendidos"
+  // del grupo de un día específico.
   function toggleProds(dayId) {
     const body  = document.getElementById('prods-' + dayId);
     const arrow = document.getElementById('toggle-' + dayId);
@@ -662,6 +799,15 @@
     arrow.classList.toggle('open');
   }
 
+  // ─────────────────────────────────────────────────────
+  // SISTEMA DE ELIMINACIÓN CON CONFIRMACIÓN
+  // pendingDeleteId → guarda el id de la venta que se
+  //   quiere eliminar mientras el usuario confirma.
+  // askDelete()     → abre el diálogo de confirmación.
+  // closeConfirm()  → cierra sin eliminar.
+  // confirmDelete() → elimina la venta de allVentas y
+  //   de localStorage, luego re-renderiza.
+  // ─────────────────────────────────────────────────────
   let pendingDeleteId = null;
 
   function askDelete(id, nombre) {
@@ -685,7 +831,219 @@
     renderVentas();
   }
 
-  document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeConfirm(); closeModal({}); } });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeConfirm(); closeModal({}); closeExport(); } });
+
+  // ─────────────────────────────────────────────────────
+  // SISTEMA DE EXPORTACIÓN A EXCEL
+  // Usa la librería ExcelJS (cargada desde CDN).
+  // openExport()   → abre el modal con fecha de hoy por defecto.
+  // closeExport()  → cierra el modal.
+  // exportExcel(useRange):
+  //   - false → exporta todo el historial
+  //   - true  → exporta solo el rango de fechas elegido
+  // Genera un archivo .xlsx con DOS hojas:
+  //   Hoja 1 "Por Cliente": agrupado por cliente con
+  //     fecha, cantidad, producto, descuento, precios y total.
+  //     Incluye fila de TOTAL por cliente.
+  //   Hoja 2 "Por Producto": una fila por producto con
+  //     nombre, precio, descuento, NIT, tel, forma de pago.
+  // Estilos aplicados con ExcelJS:
+  //   - Encabezados: fondo ROSA, negrita, centrado
+  //   - Nombre cliente: fondo ROSA CLARO
+  //   - Datos: filas alternadas en dos tonos rosados
+  //   - Total: fondo VERDE, negrita
+  //   - Formatos numéricos: "Q"#,##0.00 para moneda, 0% para descuento
+  // ─────────────────────────────────────────────────────
+  function openExport() {
+    // Default range: today
+    const hoy = new Date().toISOString().split('T')[0];
+    document.getElementById('exportDesde').value = hoy;
+    document.getElementById('exportHasta').value = hoy;
+    document.getElementById('exportOverlay').classList.add('open');
+  }
+
+  function closeExport() {
+    document.getElementById('exportOverlay').classList.remove('open');
+  }
+
+  document.getElementById('exportOverlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('exportOverlay')) closeExport();
+  });
+
+  // Convierte una fecha en formato "d/m/yyyy" (es-GT)
+  // a un objeto Date de JavaScript para poder comparar rangos.
+  function parseLocalDate(str) {
+    if (!str) return null;
+    const p = str.split('/');
+    if (p.length === 3) return new Date(p[2], p[1]-1, p[0]);
+    return null;
+  }
+
+  async function exportExcel(useRange) {
+    let ventas = JSON.parse(localStorage.getItem('ventas') || '[]');
+
+    if (useRange) {
+      const desde = document.getElementById('exportDesde').value;
+      const hasta = document.getElementById('exportHasta').value;
+      if (!desde || !hasta) { alert('Selecciona ambas fechas.'); return; }
+      ventas = ventas.filter(v => {
+        const vf = parseLocalDate(v.fecha);
+        if (!vf) return false;
+        const d = new Date(desde); d.setHours(0,0,0,0);
+        const h = new Date(hasta); h.setHours(23,59,59,999);
+        return vf >= d && vf <= h;
+      });
+    }
+
+    if (ventas.length === 0) { alert('No hay ventas en ese rango.'); return; }
+
+    const wb = new ExcelJS.Workbook();
+
+    // ── Colores ──
+    const PINK  = 'FFF092D5';
+    const GREEN = 'FF99FFA0';
+    const BROWN = 'FFF8C8E8';
+    const DARK  = 'FF1a1410';
+    const LIGHT = 'FFf5ede6';
+    const ROW1  = 'FFFDE8F5';
+    const ROW2  = 'FFFBDAF0';
+
+    const borderThin = {
+      top:    { style: 'thin',  color: { argb: 'FFC060A8' } },
+      bottom: { style: 'thin',  color: { argb: 'FFC060A8' } },
+      left:   { style: 'thin',  color: { argb: 'FFC060A8' } },
+      right:  { style: 'thin',  color: { argb: 'FFC060A8' } },
+    };
+    const borderHair = {
+      top:    { style: 'hair', color: { argb: 'FF3a2f24' } },
+      bottom: { style: 'hair', color: { argb: 'FF3a2f24' } },
+      left:   { style: 'hair', color: { argb: 'FF3a2f24' } },
+      right:  { style: 'hair', color: { argb: 'FF3a2f24' } },
+    };
+
+    function applyHeader(row, from, to) {
+      for (let c = from; c <= to; c++) {
+        const cell = row.getCell(c);
+        cell.font      = { bold: true, color: { argb: DARK }, size: 11 };
+        cell.fill      = { type: 'pattern', pattern: 'solid', fgColor: { argb: PINK } };
+        cell.border    = borderThin;
+        cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+      }
+    }
+    function applyClient(row, from, to) {
+      for (let c = from; c <= to; c++) {
+        const cell = row.getCell(c);
+        cell.font      = { bold: true, color: { argb: DARK }, size: 11 };
+        cell.fill      = { type: 'pattern', pattern: 'solid', fgColor: { argb: BROWN } };
+        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+      }
+    }
+    function applyTotal(row, from, to) {
+      for (let c = from; c <= to; c++) {
+        const cell = row.getCell(c);
+        cell.font      = { bold: true, color: { argb: DARK }, size: 11 };
+        cell.fill      = { type: 'pattern', pattern: 'solid', fgColor: { argb: GREEN } };
+        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+      }
+    }
+    function applyData(row, from, to, altColor) {
+      for (let c = from; c <= to; c++) {
+        const cell = row.getCell(c);
+        cell.fill      = { type: 'pattern', pattern: 'solid', fgColor: { argb: altColor } };
+        cell.border    = borderHair;
+        cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+      }
+    }
+
+    // ── HOJA 1: Por Cliente ──
+    const ws1 = wb.addWorksheet('Por Cliente');
+    ws1.columns = [
+      { width: 4 }, { width: 4 },
+      { width: 14 }, { width: 10 }, { width: 34 },
+      { width: 12 }, { width: 16 }, { width: 20 }, { width: 20 }, { width: 14 },
+    ];
+    ws1.addRow([]); ws1.addRow([]);
+    const rH1 = ws1.addRow(['','','Fecha de Venta','Cantidad','Descripción del Producto',
+      'Descuento','Precio de Venta','Precio con Descuento','Monto del Descuento','Total']);
+    rH1.height = 22;
+    applyHeader(rH1, 3, 10);
+
+    ventas.forEach(v => {
+      const nombre = v.cliente?.nombre || '—';
+      const fecha  = v.fecha || '';
+      const rC = ws1.addRow(['','','','',nombre,'','','','','']);
+      rC.height = 20;
+      applyClient(rC, 3, 10);
+
+      let tot = 0, first = true, ri = 0;
+      (v.productos || []).forEach(p => {
+        const ufr = p.unitFinalR != null ? p.unitFinalR : p.price;
+        const fr  = p.finalR     != null ? p.finalR     : p.price * p.qty;
+        const ud  = p.unitDisc   != null ? p.unitDisc   : 0;
+        tot += fr;
+        const rD = ws1.addRow(['','', first ? fecha : '', p.qty, p.name,
+          p.discount > 0 ? p.discount/100 : 0, p.price, ufr, ud, fr]);
+        rD.height = 18;
+        applyData(rD, 3, 10, ri % 2 === 0 ? ROW1 : ROW2);
+        // Col 6 = Descuento %, Col 7 = Precio Venta, Col 8 = Precio c/desc, Col 9 = Monto desc, Col 10 = Total
+        rD.getCell(6).numFmt  = '0%';
+        rD.getCell(7).numFmt  = '"Q"#,##0.00';
+        rD.getCell(8).numFmt  = '"Q"#,##0.00';
+        rD.getCell(9).numFmt  = '"Q"#,##0.00';
+        rD.getCell(10).numFmt = '"Q"#,##0.00';
+        first = false; ri++;
+      });
+      const rT = ws1.addRow(['','','','','','','','','TOTAL:', tot]);
+      rT.height = 20;
+      applyTotal(rT, 3, 10);
+      rT.getCell(10).numFmt = '"Q"#,##0.00';
+      ws1.addRow([]);
+    });
+
+    // ── HOJA 2: Por Producto ──
+    const ws2 = wb.addWorksheet('Por Producto');
+    ws2.columns = [
+      { width: 4 }, { width: 4 },
+      { width: 34 }, { width: 10 }, { width: 14 }, { width: 12 },
+      { width: 20 }, { width: 14 }, { width: 16 }, { width: 14 }, { width: 22 },
+    ];
+    ws2.addRow([]); ws2.addRow([]);
+    const rH2 = ws2.addRow(['','','Producto','Cantidad','Precio Normal','Descuento %',
+      'Precio con Descuento','NIT','Teléfono','Forma de Pago','Nombre Cliente']);
+    rH2.height = 22;
+    applyHeader(rH2, 3, 11);
+
+    let ri2 = 0;
+    ventas.forEach(v => {
+      (v.productos || []).forEach(p => {
+        const ufr = p.unitFinalR != null ? p.unitFinalR : p.price;
+        const rD = ws2.addRow(['', '', p.name, p.qty, p.price, p.discount, ufr,
+          v.cliente?.nit || 'CF', v.cliente?.telefono || '—',
+          v.formaPago || '—', v.cliente?.nombre || '—']);
+        rD.height = 18;
+        applyData(rD, 3, 11, ri2 % 2 === 0 ? ROW1 : ROW2);
+        // Col 5 = Precio Normal, Col 6 = Descuento %, Col 7 = Precio c/desc
+        rD.getCell(5).numFmt = '"Q"#,##0.00';
+        rD.getCell(6).numFmt = '0"%"';
+        rD.getCell(7).numFmt = '"Q"#,##0.00';
+        ri2++;
+      });
+    });
+
+    // ── Descargar ──
+    const hoy   = new Date().toLocaleDateString('es-GT').replace(/\//g, '-');
+    const fname = useRange
+      ? `ventas_${document.getElementById('exportDesde').value}_a_${document.getElementById('exportHasta').value}.xlsx`
+      : `ventas_historial_${hoy}.xlsx`;
+
+    const buffer = await wb.xlsx.writeBuffer();
+    const blob   = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url    = URL.createObjectURL(blob);
+    const a      = document.createElement('a');
+    a.href = url; a.download = fname; a.click();
+    URL.revokeObjectURL(url);
+    closeExport();
+  }
 
   loadVentas();
 </script>

@@ -6,6 +6,11 @@
   <title>Calculadora — Sistema de Ventas</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
   <style>
+    /* ─────────────────────────────────────────
+       VARIABLES GLOBALES DE COLOR Y DISEÑO
+       Cambia estos valores para modificar toda
+       la paleta de colores del sistema.
+       ───────────────────────────────────────── */
     :root {
       --pink: #F092D5;
       --brown: #7A664D;
@@ -55,7 +60,7 @@
       max-width: 680px;
     }
 
-    /* Back button */
+    /* Botón "← Inicio" para volver al menú principal */
     .back-btn {
       display: inline-flex;
       align-items: center;
@@ -189,7 +194,10 @@
     }
     .btn-danger:hover { background: #3a1010; }
 
-    /* Pago toggle */
+    /* ─────────────────────────────────────────
+       BOTONES DE FORMA DE PAGO (Efectivo / Tarjeta)
+       El botón activo se resalta en verde.
+       ───────────────────────────────────────── */
     .pago-toggle {
       display: flex;
       gap: 8px;
@@ -312,7 +320,11 @@
     }
     .tier-labels { display: flex; justify-content: space-between; margin-top: 6px; font-size: 10px; color: #5a4d3d; }
 
-    /* Toast */
+    /* ─────────────────────────────────────────
+       NOTIFICACIÓN TIPO "TOAST"
+       Aparece en la parte inferior de la pantalla
+       por 2.8 segundos al guardar una venta.
+       ───────────────────────────────────────── */
     .toast {
       position: fixed;
       bottom: 30px;
@@ -331,7 +343,11 @@
     }
     .toast.show { transform: translateX(-50%) translateY(0); }
 
-    /* Mode badge */
+    /* ─────────────────────────────────────────
+       BADGE DE MODO (esquina superior derecha)
+       Muestra "Redondeo" (rosado) o "Exacto" (verde)
+       según el modo activo de la calculadora.
+       ───────────────────────────────────────── */
     .mode-badge {
       position: fixed;
       top: 16px;
@@ -349,6 +365,7 @@
     .mode-badge.redondeo { color: var(--pink); border-color: #F092D540; background: #2a1a22; }
     .mode-badge.exacto   { color: var(--green); border-color: #99FFA040; background: #1a2a1e; }
 
+    /* El título h1 es clickeable para cambiar el modo de cálculo */
     header h1 {
       cursor: pointer;
       user-select: none;
@@ -382,7 +399,13 @@
     <p id="modeDesc">Calcula precio con descuentos.</p>
   </header>
 
-  <!-- Cliente -->
+  <!-- ─────────────────────────────────────────
+       TARJETA: DATOS DEL CLIENTE
+       Nombre con auto-capitalización de palabras.
+       Teléfono con formato automático +502 XXXX-XXXX.
+       NIT: si se deja vacío se guarda como "CF".
+       Forma de pago: toggle Efectivo/Tarjeta.
+       ───────────────────────────────────────── -->
   <div class="card" style="animation-delay:0.05s">
     <div class="card-title">👤 Datos del Cliente</div>
     <div class="form-row">
@@ -410,7 +433,13 @@
     </div>
   </div>
 
-  <!-- Agregar producto -->
+  <!-- ─────────────────────────────────────────
+       TARJETA: AGREGAR PRODUCTO
+       El campo Nombre tiene autocompletado (datalist)
+       con productos previamente ingresados.
+       Descuento viene en 15% por defecto.
+       Se puede agregar con Enter o con el botón.
+       ───────────────────────────────────────── -->
   <div class="card" style="animation-delay:0.1s">
     <div class="card-title">➕ Agregar Producto</div>
     <div class="form-row">
@@ -437,7 +466,13 @@
     <button class="btn btn-pink" onclick="addProduct()">＋ Agregar al carrito</button>
   </div>
 
-  <!-- Carrito -->
+  <!-- ─────────────────────────────────────────
+       TARJETA: CARRITO
+       Lista de productos agregados.
+       Cada producto muestra precio, cantidad,
+       descuento, monto de descuento y precio final.
+       Los productos EXACTOS llevan badge verde "EXACTO".
+       ───────────────────────────────────────── -->
   <div class="card" style="animation-delay:0.2s">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
       <div class="card-title" style="margin-bottom:0">🛒 Carrito</div>
@@ -451,7 +486,12 @@
     </div>
   </div>
 
-  <!-- Resumen -->
+  <!-- ─────────────────────────────────────────
+       TARJETA: RESUMEN
+       Muestra subtotal, descuento y total a pagar.
+       El botón "Guardar venta" almacena todo
+       en localStorage bajo la clave "ventas".
+       ───────────────────────────────────────── -->
   <div class="card" style="animation-delay:0.3s" id="summaryCard">
     <div class="card-title">📊 Resumen</div>
     <div class="summary-row">
@@ -472,7 +512,7 @@
       <span class="val" id="totalDisplay">Q 0</span>
     </div>
 
-    <!-- Tier bar eliminado -->
+    <!-- Tier bar de nivel de ahorro: fue eliminado por solicitud del usuario -->
 
     <button class="btn btn-green" id="saveBtn" onclick="saveVenta()">💾 Guardar venta</button>
   </div>
@@ -482,10 +522,21 @@
 <div class="toast" id="toast"></div>
 
 <script>
+  // ─────────────────────────────────────────────────────
+  // VARIABLES GLOBALES DE ESTADO
+  // products   → array de productos en el carrito actual
+  // formaPago  → "Efectivo" o "Tarjeta" (por defecto Tarjeta)
+  // modoExacto → false = modo redondeo, true = modo exacto
+  // ─────────────────────────────────────────────────────
   let products = [];
   let formaPago = 'Tarjeta';
   let modoExacto = false;
 
+  // ─────────────────────────────────────────────────────
+  // toggleMode(): alterna entre modo Redondeo y modo Exacto.
+  // Se activa al hacer clic en el título h1.
+  // Actualiza el badge, el subtítulo y re-renderiza el carrito.
+  // ─────────────────────────────────────────────────────
   function toggleMode() {
     modoExacto = !modoExacto;
     const badge = document.getElementById('modeBadge');
@@ -502,15 +553,25 @@
     if (products.length > 0) render();
   }
 
+  // Cambia la forma de pago seleccionada y actualiza los botones toggle.
   function setPago(tipo) {
     formaPago = tipo;
     document.getElementById('pagoEfectivo').classList.toggle('active', tipo === 'Efectivo');
     document.getElementById('pagoTarjeta').classList.toggle('active',  tipo === 'Tarjeta');
   }
 
+  // fmt(n): formatea un número como "Q 1,500" (sin decimales, con separador de miles)
   function fmt(n) { return 'Q ' + Math.round(n).toLocaleString('es-GT'); }
+  // roundUp5(n): redondea n al múltiplo de 5 más cercano hacia ARRIBA.
+  // Ejemplo: 262.3 → 265, 260 → 260, 261 → 265
   function roundUp5(n) { return Math.ceil(n / 5) * 5; }
 
+  // ─────────────────────────────────────────────────────
+  // addProduct(): lee los campos del formulario, valida que
+  // el precio sea mayor a 0, agrega el producto al array
+  // con su tipo (aproximado/exacto según el modo activo),
+  // guarda el nombre en el autocompletado y limpia el form.
+  // ─────────────────────────────────────────────────────
   function addProduct() {
     const name     = document.getElementById('productName').value.trim() || 'Producto';
     const price    = parseFloat(document.getElementById('productPrice').value) || 0;
@@ -531,16 +592,27 @@
     render();
   }
 
+  // Elimina el producto con ese id del carrito y re-renderiza.
   function removeProduct(id) {
     products = products.filter(p => p.id !== id);
     render();
   }
 
+  // Vacía el carrito completamente.
   function clearAll() {
     products = [];
     render();
   }
 
+  // ─────────────────────────────────────────────────────
+  // calcProduct(p): calcula los precios de un producto.
+  // Modo EXACTO   → precio * (1 - desc%) sin redondeo
+  // Modo REDONDEO → redondea al múltiplo de 5 más cercano
+  // Devuelve: { unitFinalR, finalR, unitDisc }
+  //   unitFinalR = precio unitario con descuento (ya procesado)
+  //   finalR     = unitFinalR × cantidad
+  //   unitDisc   = monto de descuento por unidad
+  // ─────────────────────────────────────────────────────
   function calcProduct(p) {
     if (p.tipo === 'exacto' || (modoExacto && p.tipo === undefined)) {
       // Exact: no rounding
@@ -557,6 +629,10 @@
     }
   }
 
+  // ─────────────────────────────────────────────────────
+  // render(): dibuja el carrito y actualiza el resumen.
+  // Se llama cada vez que se agrega, elimina o cambia el modo.
+  // ─────────────────────────────────────────────────────
   function render() {
     const list = document.getElementById('productList');
     if (products.length === 0) {
@@ -602,6 +678,20 @@
     document.getElementById('totalDisplay').textContent        = 'Q ' + totalFinal.toLocaleString('es-GT');
   }
 
+  // ─────────────────────────────────────────────────────
+  // saveVenta(): guarda la venta completa en localStorage.
+  // Estructura del objeto venta:
+  //   id       → timestamp (Date.now()) como identificador único
+  //   fecha    → fecha local en formato dd/mm/yyyy
+  //   hora     → hora local HH:MM:SS
+  //   cliente  → { nombre, telefono, nit }
+  //   formaPago→ "Efectivo" o "Tarjeta"
+  //   productos→ array con datos + resultados de calcProduct()
+  //   subtotal → suma de (precio × cantidad) sin descuento
+  //   descuento→ subtotal - totalFinal
+  //   total    → suma de finalR de todos los productos
+  // Al guardar se limpia el carrito y se resetea el formulario.
+  // ─────────────────────────────────────────────────────
   function saveVenta() {
     if (products.length === 0) { showToast('⚠️ Agrega al menos un producto'); return; }
 
@@ -649,6 +739,8 @@
     render();
   }
 
+  // Muestra una notificación flotante en la parte inferior.
+  // Desaparece automáticamente después de 2.8 segundos.
   function showToast(msg) {
     const t = document.getElementById('toast');
     t.textContent = msg;
@@ -769,6 +861,8 @@
     return canvas;
   }
 
+  // roundRect(): dibuja un rectángulo con esquinas redondeadas en el canvas.
+  // Usado para el borde del PNG de resumen de venta.
   function roundRect(ctx, x, y, w, h, r) {
     ctx.beginPath();
     ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y); ctx.quadraticCurveTo(x+w,y,x+w,y+r);
@@ -777,14 +871,19 @@
     ctx.lineTo(x,y+r); ctx.quadraticCurveTo(x,y,x+r,y); ctx.closePath();
   }
 
-  // Auto-capitalize each word in name field
+  // Auto-capitaliza la primera letra de cada palabra mientras se escribe.
+  // Mantiene la posición del cursor tras la transformación.
   document.getElementById('clientName').addEventListener('input', function() {
     const pos = this.selectionStart;
     this.value = this.value.replace(/\b\w/g, c => c.toUpperCase());
     this.setSelectionRange(pos, pos);
   });
 
-  // Phone formatter: +502 XXXX-XXXX
+  // ─────────────────────────────────────────────────────
+  // formatPhone(): formatea el teléfono automáticamente.
+  // Limpia todo lo que no sea número, elimina prefijo 502
+  // si el usuario lo escribe, y aplica formato +502 XXXX-XXXX.
+  // ─────────────────────────────────────────────────────
   function formatPhone(input) {
     let digits = input.value.replace(/\D/g, '');
     // Remove leading 502 if user typed it
@@ -801,7 +900,15 @@
     input.value = formatted;
   }
 
-  // ── Autocompletado de productos ──
+  // ─────────────────────────────────────────────────────
+  // AUTOCOMPLETADO DE PRODUCTOS
+  // saveProductSuggestion(name): guarda el nombre en localStorage
+  //   bajo la clave "productSuggestions" (array ordenado alfabéticamente).
+  //   Solo guarda si el nombre no existe ya.
+  // loadProductSuggestions(): carga la lista al abrir la página.
+  // refreshDatalist(list): actualiza el <datalist> del HTML
+  //   con las opciones guardadas para que aparezcan como sugerencias.
+  // ─────────────────────────────────────────────────────
   function saveProductSuggestion(name) {
     if (!name || name === 'Producto') return;
     const key = 'productSuggestions';
