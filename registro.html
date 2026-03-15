@@ -1030,6 +1030,64 @@
       });
     });
 
+    // ── HOJA 3: Productos Consolidados (agrupados por nombre + descuento) ──
+    const ws3 = wb.addWorksheet('Consolidado');
+    ws3.columns = [
+      { width: 4 }, { width: 4 },
+      { width: 34 }, { width: 12 }, { width: 14 }, { width: 12 }, { width: 20 }, { width: 16 },
+    ];
+    ws3.addRow([]); ws3.addRow([]);
+    const rH3 = ws3.addRow(['', '', 'Producto', 'Cantidad Total', 'Precio Normal',
+      'Descuento %', 'Precio con Descuento', 'Total Vendido']);
+    rH3.height = 22;
+    applyHeader(rH3, 3, 8);
+
+    // Agrupar: clave = nombre + "|" + descuento + "|" + precio
+    // para que el mismo producto con diferente precio/descuento sea fila separada
+    const consolidado = {};
+    ventas.forEach(v => {
+      (v.productos || []).forEach(p => {
+        const ufr = p.unitFinalR != null ? p.unitFinalR : p.price;
+        const fr  = p.finalR     != null ? p.finalR     : p.price * p.qty;
+        const key = `${p.name}|||${p.discount}|||${p.price}`;
+        if (!consolidado[key]) {
+          consolidado[key] = {
+            name:     p.name,
+            price:    p.price,
+            discount: p.discount,
+            ufr:      ufr,
+            qty:      0,
+            total:    0,
+          };
+        }
+        consolidado[key].qty   += p.qty;
+        consolidado[key].total += fr;
+      });
+    });
+
+    // Ordenar por nombre
+    const consolidadoRows = Object.values(consolidado)
+      .sort((a, b) => a.name.localeCompare(b.name));
+
+    let ri3 = 0;
+    consolidadoRows.forEach(p => {
+      const rD = ws3.addRow(['', '', p.name, p.qty, p.price, p.discount, p.ufr, p.total]);
+      rD.height = 18;
+      applyData(rD, 3, 8, ri3 % 2 === 0 ? ROW1 : ROW2);
+      rD.getCell(5).numFmt = '"Q"#,##0.00';
+      rD.getCell(6).numFmt = '0"%"';
+      rD.getCell(7).numFmt = '"Q"#,##0.00';
+      rD.getCell(8).numFmt = '"Q"#,##0.00';
+      ri3++;
+    });
+
+    // Fila de gran total
+    const granTotal = consolidadoRows.reduce((s, p) => s + p.total, 0);
+    const rGT = ws3.addRow(['', '', '', '', '', '', 'TOTAL GENERAL:', granTotal]);
+    rGT.height = 22;
+    applyTotal(rGT, 3, 8);
+    rGT.getCell(8).numFmt = '"Q"#,##0.00';
+
     // ── Descargar ──
     const hoy   = new Date().toLocaleDateString('es-GT').replace(/\//g, '-');
     const fname = useRange
